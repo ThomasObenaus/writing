@@ -2,7 +2,7 @@
 
 If you jumped on the container train and dockerized (or rockitized) your application components (microservices) you are on a good way for a scalable and resilient system.
 
-The next questions to be answered are:
+To really run such a system on production at scale the questions to be answered are:
 
 1. Scheduling - Where do these containers run?
 2. Management - Who manages their life cycle?
@@ -31,3 +31,21 @@ To summarize - the most useful features that lead to the decision for nomad are:
 - Extensibility - Very good integration in hashicorp tools. Thus the missing core features can be added in a easy and natural way.
 
 ## Architectural Overview
+
+![Nomad Overview](Nomad_Overview.png)
+
+The core of the system is Nomad. Nomad is a binary that provides a server and a client mode. Three nomad servers per region are used here to implement a fault tolerant nomad cluster across multiple availability zones. Using the raft protocol the servers elect the nomad leader. The leader then is responsible to manage all cluster calls and decisions. In client mode nomad provides the nodes where the actual services are deployed, running on and are orchestrated by nomad.
+
+## Service Discovery
+
+Consul
+
+## Load Balancing
+
+## Monitoring
+
+## Logging
+
+## Multi Region
+
+Indicated by the bold purple line in the overview image, the nomad leader of data-center A communicates with the leader in data-center B using the serf (gossip) protocol. Thus a federation is implemented allowing orchestration and management across different regions even different cloud providers.
