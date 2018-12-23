@@ -29,6 +29,7 @@ To summarize - the most useful features that lead to the decision for nomad are:
 - Container Support - Docker, rocket, simple binaries/ executables can be scheduled.
 - Cloud Provider Agnostic - Hybrid, multi IaaS provider cloud is possible.
 - Extensibility - Very good integration in hashicorp tools. Thus the missing core features can be added in a easy and natural way.
+- Deployment - Support for known deployment patterns, like rolling, canary and blue green.
 
 ## Architectural Overview
 
@@ -38,14 +39,16 @@ The core of the system is Nomad. Nomad is a binary that provides a server and a 
 
 ## Service Discovery
 
-Consul
-
 ## Load Balancing
 
-## Monitoring
-
-## Logging
+## Monitoring and Logging
 
 ## Multi Region
 
-Indicated by the bold purple line in the overview image, the nomad leader of data-center A communicates with the leader in data-center B using the serf (gossip) protocol. Thus a federation is implemented allowing orchestration and management across different regions even different cloud providers.
+Nomad provides a feature called federation. With this one can connect different nomad clusters. Having this implemented the system can orchestrate and manage services across different regions even different cloud providers.
+
+Indicated by the bold purple line in the overview image, the nomad leader of data-center A communicates with the leader in data-center B using the serf (gossip) protocol.
+
+## Outlook
+
+In the next post I will show how to set up the Container Orchestration System described here. With terraform the whole system will be set up on an empty AWS account. The goal is to have complete platform where services can be deployed and managed easily.
