@@ -35,19 +35,22 @@ To summarize - the most useful features that lead to the decision for nomad are:
 
 ![Nomad Overview](Nomad_Overview.png)
 
-The core of the system is Nomad. Nomad is a binary that provides a server and a client mode. Three nomad servers per region are used here to implement a fault tolerant nomad cluster across multiple availability zones. Using the raft protocol the servers elect the nomad leader. The leader then is responsible to manage all cluster calls and decisions. In client mode nomad provides the nodes where the actual services are deployed, running on and are orchestrated by nomad.
+The core of the system is Nomad. Nomad is able to deploy and manage services/ applications on a fleet of compute instances (client nodes).
+Actually nomad manages so called nomad jobs. A **nomad job** is either a single or a group of tasks. A task is either a container (docker or rocket), a raw binary executable, a jar file or even a bash script. Such a job represents all the things that have to be deployed tightly together on the same client node. Usually a nomad job contains only one task.
+
+Nomad is a simple binary that provides a server- and a client mode. Three nomad instances in **server mode** per region are used here to implement a fault tolerant nomad cluster across multiple availability zones. In the image above they are marked with the green nomad logo. Using the raft protocol the servers elect the nomad leader. The leader then is responsible to manage all cluster calls and decisions.
+
+In **client mode**, nomad provides the nodes where the actual nomad jobs are deployed and running on. I the image above these nodes are indicated by the small boxes.
+
+Nomad also provides a feature called **federation**. This enables the option to connect different nomad clusters. Having this implemented the system can orchestrate and manage services across different regions, which even can be hosted on different cloud providers. Indicated by the bold purple line in the overview image, the nomad leader of data-center A communicates with the leader in data-center B using the serf (gossip) protocol.
 
 ## Service Discovery
+
+Consul is an essential part
 
 ## Load Balancing
 
 ## Monitoring and Logging
-
-## Multi Region
-
-Nomad provides a feature called federation. With this one can connect different nomad clusters. Having this implemented the system can orchestrate and manage services across different regions even different cloud providers.
-
-Indicated by the bold purple line in the overview image, the nomad leader of data-center A communicates with the leader in data-center B using the serf (gossip) protocol.
 
 ## Outlook
 
