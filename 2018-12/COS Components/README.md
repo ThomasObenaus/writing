@@ -69,9 +69,12 @@ To ease up the first setup fabio is used. Envoy will be introduced instead in an
 
 ![Ingress Controller by Fabio](Ingress_Controller_by_Fabio.png)
 
-As already mentioned, fabio is used as load balancer and ingress traffic controller. Fabio integrates very well with consul, implementing the consul API. Internally fabio knows the consul service catalog and thus about the state and location of the services registered at consul. Based on this knowledge fabio adjusts ip-rules and routing tables on the specific nomad client node. Thus the requests are routed to the correct targets. It even works if the requested job lives on another instance.
-This situation is shown in the image above. Here the client requests a service represented on nomad by job A. After hitting the AWS ALB the request is routed to fabio deployed as nomad job who then forwards the request job A. Either to the instance of job A on nomad client node 1 or 2.
+As already mentioned, fabio is used as load balancer and ingress traffic controller. Fabio integrates very well with consul, implementing the consul API. Internally fabio knows the consul service catalog and thus about the state and location of the services registered at consul. Based on this knowledge fabio adjusts ip-rules and routing tables on the specific nomad client node. Thus the requests are routed to the correct targets. It even works if the requested job lives on another instance, since the routes are based on ip and port.
+This situation is shown in the image above. Here the client requests a service represented on nomad by job A. After hitting the AWS ALB the request is routed to fabio, deployed as nomad job, which then forwards the request to job A. Either to the instance of job A on nomad client node 1 or 2.
 
-## Outlook
+## Summary and Outlook
+
+In this post I explained why nomad was chosen as core component of this cluster orchestration system.
+I showed how the architecture of such a system could look like and discussed the components covering the most important topics like job scheduling, service discovery and load balancing/ routing of ingress traffic.
 
 In the next post I will show how to set up the Container Orchestration System as it is described here. The whole setup is made using terraform on an empty AWS account to ensure that it can be automated/ reproduced and thus maintained easily. The goal is to have complete platform where services can be deployed and managed easily.
