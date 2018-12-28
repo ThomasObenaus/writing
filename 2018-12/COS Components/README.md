@@ -36,22 +36,49 @@ To summarize - the most useful features that lead to the decision for nomad are:
 ![Nomad Overview](Nomad_Overview.png)
 
 The core of the system is Nomad. Nomad is able to deploy and manage services/ applications on a fleet of compute instances (client nodes).
-Actually nomad manages so called nomad jobs. A **nomad job** is either a single or a group of tasks. A task is either a container (docker or rocket), a raw binary executable, a jar file or even a bash script. Such a job represents all the things that have to be deployed tightly together on the same client node. Usually a nomad job contains only one task.
+Actually nomad manages so called nomad jobs. A **nomad job** is either a single task or a group of tasks. A task is either a container (docker or rocket), a raw binary executable, a jar file or even a bash script. Such a job represents all the things that have to be deployed tightly together on the same client node. Usually a nomad job contains only one task.
 
-Nomad is a simple binary that provides a server- and a client mode. Three nomad instances in **server mode** per region are used here to implement a fault tolerant nomad cluster across multiple availability zones. In the image above they are marked with the green nomad logo. Using the raft protocol the servers elect the nomad leader. The leader then is responsible to manage all cluster calls and decisions.
+Nomad itself is shipped as a simple binary that provides a server- and a client mode. This binary is just deployed on compute instances (i.e AWS EC2) thus transforming these instances to nomad server- or nomad client nodes.
+Three instances with the nomad binary in **server mode** per data center are used to implement a fault tolerant nomad cluster across multiple availability zones. In the image above they are marked with the green nomad logo. Using the raft protocol the server nodes elect the nomad leader. The nomad leader then is responsible to manage all cluster calls and decisions.
 
-In **client mode**, nomad provides the nodes where the actual nomad jobs are deployed and running on. I the image above these nodes are indicated by the small boxes.
+Instances with the nomad binary in **client mode**, ares the nodes where the actual nomad jobs are deployed and running on. In the image above these nodes are indicated by the small boxes.
 
-Nomad also provides a feature called **federation**. This enables the option to connect different nomad clusters. Having this implemented the system can orchestrate and manage services across different regions, which even can be hosted on different cloud providers. Indicated by the bold purple line in the overview image, the nomad leader of data-center A communicates with the leader in data-center B using the serf (gossip) protocol.
+Nomad also provides a feature called **federation**. This enables the option to connect different nomad clusters. Having this implemented the system can orchestrate and manage services across multiple data centers, which even can be hosted by different cloud providers. Indicated by the bold purple line in the overview image, the nomad leader of data-center A communicates with the leader in data-center B using the serf (gossip) protocol.
 
 ## Service Discovery
 
-Consul is an essential part
+![Service Discovery with Consul](ServiceDiscovery_with_Consul.png)
 
-## Load Balancing
+Beside nomad, consul is also an essential part of the system and gives the answer to two important questions:
+
+1. How do the nomad server nodes find each other and how do they know about the state and location of the nomad client nodes?
+2. How do the services can find other services they have to communicate with?
+
+The problem of service discovery is solved by consul. Consul knows the current health status and the location (IP and port) of all registered services.
+
+Like nomad, consul is a single binary that can be run in server- or client mode. The **consul in server mode** is deployed on instances which are then transformed into the consul server nodes. In the architectural overview image these nodes are marked with the purple consul icon. For fault tolerance at least three consul server nodes are deployed. They elect (like nomad does) a leader, that manages all cluster calls and decisions.
+
+**Consul in client mode** runs on the remaining instances, which are the nomad server- and nomad client nodes. Instead of contacting the consul server, each component directly communicates with the consul client that is locally available on each node. This removes the need to find out the actual location of the consul server.
+
+Nomad and consul are perfectly integrated. The nomad nodes are able to find each other automatically using consul. Each node, either server or client, registers itself at consul and reports it's health status and are promoted through the consul API as available nomad-client/ nomad service.
+
+The same feature is applied for the jobs managed by nomad. Nomad automatically registers a deployed job at consul. Thus all deployed services can be found querying the consul API, which then returns the concrete IP, port and health status of the specific service.
+This implies that each service has to implement code that queries the consul API. To avoid this effort there are components we can use instead, like the load balancer [fabio](https://fabiolb.net) or [envoy](https://www.envoyproxy.io) which creates a service mesh.
+To ease up the first setup fabio is used. Envoy will be introduced instead in an upcoming blog-post since as a better solution for this purpose.
+
+## Ingress Controller
+
+![Ingress Controller by Fabio](Ingress_Controller_by_Fabio.png)
+
+As already mentioned, fabio is used as load balancer and ingress traffic controller. Fabio integrates very well with consul, implementing the consul API. Internally fabio knows the consul service catalog and thus about the state and location of the services registered at consul. Based on this knowledge fabio adjusts ip-rules and routing tables on the specific nomad client node. Thus the requests are routed to the correct targets. It even works if the requested job lives on another instance.
+This situation is shown in the image above. Here the client requests a service represented on nomad by job A. After hitting the AWS ALB the request is routed to fabio deployed as nomad job who then forwards the request job A. Either to the instance of job A on nomad client node 1 or 2.
 
 ## Monitoring and Logging
 
+To actually know details and behavior of the deployed services, a logging and a monitoring system is needed.
+In this setup for logging the [ELK Stack](https://www.elastic.co/elk-stack) provided by elastic is integrated. To be precise instead of filebeat+logstash [fluend](https://www.fluentd.org) as logging connector is used.
+Regarding the topic of monitoring, [prometheus](https://prometheus.io) to collect the metrics and [grafana](https://grafana.com) to provide dashboards was chosen.
+
 ## Outlook
 
-In the next post I will show how to set up the Container Orchestration System described here. With terraform the whole system will be set up on an empty AWS account. The goal is to have complete platform where services can be deployed and managed easily.
+In the next post I will show how to set up the Container Orchestration System as it is described here. The whole setup is made using terraform on an empty AWS account to ensure that it can be automated/ reproduced and thus maintained easily. The goal is to have complete platform where services can be deployed and managed easily.
