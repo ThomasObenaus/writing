@@ -1,13 +1,13 @@
 # How a production ready Container Orchestration System could look like
 
-If you jumped on the container train and dockerized (or rockitized) your application components (microservices) you are on a good way for a scalable and resilient system.
+If you jumped on the containerization train and dockerized (or rockitized) your application components (microservices) you are on a good way for a scalable and resilient system.
 
 To really run such a system on production at scale the questions to be answered are:
 
-1. Scheduling - Where do these containers run?
-2. Management - Who manages their life cycle?
-3. Service Discovery - How do they find each other?
-4. Load Balancing - How to route requests?
+1. Scheduling: Where do these containers run?
+2. Management: Who manages their life cycle?
+3. Service Discovery: How do they find each other?
+4. Load Balancing: How to route requests?
 
 After some research one quickly finds systems like [kubernetes](https://kubernetes.io), [DC/OS](https://dcos.io), [AWS ECS](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/Welcome.html), [AWS EKS](https://aws.amazon.com/eks/) (managed kubernetes cluster), [Docker Swarm](https://github.com/docker/swarm/), etc. Such systems are kind of orchestrating the containers placement, communication and life cycle. The so called **Container Orchestration Systems** are responsible to manage containers and to abstract away the actual location they are running on.
 
@@ -23,12 +23,12 @@ Nomad is developed by [Hashicorp](https://www.hashicorp.com), a company focusing
 
 To summarize - the most useful features that lead to the decision for nomad are:
 
-- Complexity - Nomad is easy to understand and thus to set up and maintain.
-- Good Job - Nomad is a highly scalable and fast scheduler using an optimistic approach.
-- Container Support - Docker, rocket, simple binaries/ executables can be scheduled.
-- Cloud Provider Agnostic - Hybrid, multi IaaS provider cloud is possible.
-- Extensibility - Very good integration in hashicorp tools. Thus the missing core features can be added in a easy and natural way.
-- Deployment - Support for known deployment patterns, like rolling, canary and blue green.
+- Complexity: Nomad is easy to understand and thus to set up and maintain.
+- Good Job: Nomad is a highly scalable and fast scheduler using an optimistic approach.
+- Container Support: Docker, rocket, simple binaries/ executables can be scheduled.
+- Cloud Provider Agnostic: Hybrid, multi IaaS provider cloud is possible.
+- Extensibility: Very good integration in hashicorp tools. Thus the missing core features can be added in a easy and natural way.
+- Deployment: Support for known deployment patterns, like rolling, canary and blue green.
 
 ## Architectural Overview
 
