@@ -8,7 +8,6 @@ To really run such a system on production at scale the questions to be answered 
 2. Management - Who manages their life cycle?
 3. Service Discovery - How do they find each other?
 4. Load Balancing - How to route requests?
-5. Monitoring/ Logging - How can I see what is happening? What are they actually doing?
 
 After some research one quickly finds systems like [kubernetes](https://kubernetes.io), [DC/OS](https://dcos.io), [AWS ECS](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/Welcome.html), [AWS EKS](https://aws.amazon.com/eks/) (managed kubernetes cluster), [Docker Swarm](https://github.com/docker/swarm/), etc. Such systems are kind of orchestrating the containers placement, communication and life cycle. The so called **Container Orchestration Systems** are responsible to manage containers and to abstract away the actual location they are running on.
 
@@ -72,12 +71,6 @@ To ease up the first setup fabio is used. Envoy will be introduced instead in an
 
 As already mentioned, fabio is used as load balancer and ingress traffic controller. Fabio integrates very well with consul, implementing the consul API. Internally fabio knows the consul service catalog and thus about the state and location of the services registered at consul. Based on this knowledge fabio adjusts ip-rules and routing tables on the specific nomad client node. Thus the requests are routed to the correct targets. It even works if the requested job lives on another instance.
 This situation is shown in the image above. Here the client requests a service represented on nomad by job A. After hitting the AWS ALB the request is routed to fabio deployed as nomad job who then forwards the request job A. Either to the instance of job A on nomad client node 1 or 2.
-
-## Monitoring and Logging
-
-To actually know details and behavior of the deployed services, a logging and a monitoring system is needed.
-In this setup for logging the [ELK Stack](https://www.elastic.co/elk-stack) provided by elastic is integrated. To be precise instead of filebeat+logstash [fluend](https://www.fluentd.org) as logging connector is used.
-Regarding the topic of monitoring, [prometheus](https://prometheus.io) to collect the metrics and [grafana](https://grafana.com) to provide dashboards was chosen.
 
 ## Outlook
 
