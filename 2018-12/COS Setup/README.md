@@ -4,6 +4,8 @@ In my previous post [How a Container Orchestration System could look like](https
 
 In this post I will describe step by step how to set up/ deploy this COS on an empty AWS account using [terraform](https://www.terraform.io).
 
+_All steps described and scripts used in this post are tested with an ubuntu 16.04 but should also work on other linux based systems._
+
 ## Prerequisites
 
 ### AWS Account and Credentials Profile
@@ -32,8 +34,56 @@ aws_access_key_id = PASTE HERE YOUR ACCESS KEY
 aws_secret_access_key = PASTE HERE YOUR SECRET KEY
 ```
 
+Now a profile named `my_cos_account` is available and will be used to directly create the AWS resources that are needed to set up the COS.
+
 ### Tools
 
-1. Terraform
-2. Nomad
-3. Packer
+Before we can really start to deploy the COS we have to install some essential tools.
+
+1. **Terraform**: Is needed to create/ deploy AWS resources. Here **version 0.11.11** is used.
+
+   - Download the binary from [Terraform Downloads](https://www.terraform.io/downloads.html).
+   - Unzip and install it.
+
+   ```bash
+   cd ~/Downloads
+   unzip terraform_0.11.11_linux_amd64.zip
+   sudo mkdir -p /opt/terraform/0.11.11
+   sudo mv terraform /opt/terraform/0.11.11
+   cd /usr/bin
+   sudo ln -s /opt/terraform/0.11.11/terraform terraform
+   ```
+
+   - Test it with `terraform --version`
+
+2. **Nomad**: Is needed as CLI to be able to deploy services to the COS and show the status of the COS. Here **version 0.8.6** is used.
+
+   - Download the binary from [Nomad Downloads](https://www.nomadproject.io/downloads.html)
+   - Unzip and install it.
+
+   ```bash
+   cd ~/Downloads
+   unzip nomad_0.8.6_linux_amd64.zip
+   sudo mkdir -p /opt/nomad/0.8.6
+   sudo mv nomad /opt/nomad/0.8.6
+   cd /usr/bin
+   sudo ln -s /opt/nomad/0.8.6/nomad nomad
+   ```
+
+- Test it with `nomad --version`
+
+3. **Packer**: Is needed to bake (create) the AWS AMI that contains the nomad binary and is then actually used as image for the AWS EC2 instances that form the COS. Here **version 1.3.3** is used.
+
+   - Download the binary from [Packer Downloads](https://www.packer.io/downloads.html)
+   - Unzip and install it.
+
+   ```bash
+   cd ~/Downloads
+   unzip packer_1.3.3_linux_amd64.zip
+   sudo mkdir -p /opt/packer/1.3.3
+   sudo mv packer /opt/packer/1.3.3
+   cd /usr/bin
+   sudo ln -s /opt/packer/1.3.3/packer packer
+   ```
+
+- Test it with `packer --version`
