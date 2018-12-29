@@ -87,3 +87,43 @@ Before we can really start to deploy the COS we have to install some essential t
    ```
 
 - Test it with `packer --version`
+
+## Deployment
+
+The whole setup consists of terraform code and is available at `https://github.com/MatthiasScholz/cos`.
+This project is designed as a terraform module with a tailored API. It can be directly integrated into an existing infrastructure to add a COS to your infrastructure stack.
+Additionally this project provides a self contained `root-example` that deploys beside the COS also a minimal networking infrastructure.
+
+First lets obtain the code.
+
+```bash
+# Create work folder
+mkdir ~/medium-cos/ && cd ~/medium-cos/
+
+# Clone the code using tag v0.0.2
+git clone --branch v0.0.2 https://github.com/MatthiasScholz/cos
+```
+
+```bash
+cd ~/medium-cos/cos/modules/ami2
+
+```
+
+## Create the Machine Image
+
+### Prepare AWS Credentials
+
+As described at [Authentication Packer](https://www.packer.io/docs/builders/amazon.html#authentication) you can use static, evironment variables or shared credentials.
+
+```bash
+# environment variables
+export AWS_ACCESS_KEY_ID="anaccesskey"
+export AWS_SECRET_ACCESS_KEY="asecretkey"
+export AWS_DEFAULT_REGION="us-west-2"
+```
+
+### Build the AMI using Packer
+
+```bash
+packer build nomad-consul-docker-ecr.json
+```
