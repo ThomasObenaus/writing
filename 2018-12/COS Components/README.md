@@ -1,4 +1,4 @@
-# How a production ready Container Orchestration System could look like
+# How a Container Orchestration System could look like
 
 If you jumped on the containerization train and dockerized (or rockitized) your application components (microservices) you are on a good way for a scalable and resilient system.
 
