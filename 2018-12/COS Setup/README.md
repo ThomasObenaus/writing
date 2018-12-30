@@ -56,7 +56,7 @@ Before we can really start to deploy the COS we have to install some essential t
 
    - Test it with `terraform --version`
 
-2. **Nomad**: Is needed as CLI to be able to deploy services to the COS and show the status of the COS. Here **version 0.8.6** is used.
+2. **Nomad (CLI)**: Is needed as CLI to be able to deploy services to the COS and show the status of the COS. Here **version 0.8.6** is used.
 
    - Download the binary from [Nomad Downloads](https://www.nomadproject.io/downloads.html)
    - Unzip and install it.
@@ -100,7 +100,7 @@ Therefore the following steps have to be done:
 2. Build the Machine Image (AMI) for the EC2 instances.
 3. Create an EC2 instance key pair.
 4. Deploy the infrastructure and the COS.
-5. Deploy Fabio.
+5. Deploy fabio.
 6. Deploy a sample service.
 
 ### Obtain the code
@@ -187,4 +187,58 @@ These can be used to open the nomad UI `xdg-open "http://$(terraform output noma
 
 ![Nomad UI](NomadUi.png)
 
-### Deploy Fabio
+### Deploy fabio
+
+Now having an empty system up and running the last missing part of the whole COS is fabio as the ingress traffic controller.
+fabio will be deployed as the first nomad job.
+
+To interact with the nomad server you can make use of the nomad CLI locally installed on your computer. First you have to specify where the nomad CLI can find the nomad server by setting the environment variable `NOMAD_ADDR` appropriately.
+This can be done by calling `export NOMAD_ADDR=http://$(terraform output nomad_ui_alb_dns)`.
+With `nomad server members` you should now get a list of three nomad servers, one of them elected as leader.
+
+The nomad job description for deploying fabio is located at `~/medium-cos/cos/examples/jobs/fabio.nomad`. It deploy the raw binary of the reverse proxy, thus no docker job yet.
+
+```bash
+job "fabio" {
+  datacenters = ["public-services"]
+
+  type = "system"
+  update {
+    stagger = "5s"
+    max_parallel = 1
+  }
+
+  group "fabio" {
+    task "fabio" {
+      driver = "exec"
+      config {
+        command = "fabio-1.5.8-go1.10-linux_amd64"
+      }
+
+      artifact {
+        source = "https://github.com/eBay/fabio/releases/download/v1.5.8/fabio-1.5.8-go1.10-linux_amd64"
+      }
+
+      resources {
+        cpu = 500
+        memory = 128
+        network {
+          mbits = 1
+
+          port "http" {
+            static = 9999
+          }
+          port "ui" {
+            static = 9998
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+With `nomad run ~/medium-cos/cos/examples/jobs/fabio.nomad`, fabio will be deployed to nomad to complete the COS setup.
+To test if the deployment succeed you can either open the fabio UI using `xdg-open "http://$(terraform output fabio_ui_alb_dns)"` or check the nomad UI.
+
+![FabioDeployed](FabioDeployed.png)
