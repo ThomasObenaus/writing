@@ -100,7 +100,7 @@ Therefore the following steps have to be done:
 2. Build the Machine Image (AMI) for the EC2 instances.
 3. Create an EC2 instance key pair.
 4. Deploy the infrastructure and the COS.
-5. Deploy fabio.
+5. Deploy Fabio.
 6. Deploy a sample service.
 
 ### Obtain the code
@@ -179,4 +179,12 @@ terraform plan -out cos.plan -var deploy_profile=my_cos_account -var nomad_ami_i
 terraform apply "cos.plan"
 ```
 
-terraform plan -out cos.plan -var deploy_profile=my_cos_account -var nomad_ami_id_servers=ami-0b9a4b8a33ab8e025 -var nomad_ami_id_clients=ami-0b9a4b8a33ab8e025
+After successful deployment terraform prints some useful parameters to the terminal.
+
+![TF_Output](TF_Output.png)
+
+These can be used to open the nomad UI `xdg-open "http://$(terraform output nomad_ui_alb_dns)"` or the consul UI `xdg-open "http://$(terraform output consul_ui_alb_dns)"`.
+
+![Nomad UI](NomadUi.png)
+
+### Deploy Fabio
