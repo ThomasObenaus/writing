@@ -98,9 +98,10 @@ Therefore the following steps have to be done:
 
 1. Obtain the source code from github.
 2. Build the Machine Image (AMI) for the EC2 instances.
-3. Deploy the infrastructure and the COS.
-4. Deploy fabio.
-5. Deploy a sample service.
+3. Create an EC2 instance key pair.
+4. Deploy the infrastructure and the COS.
+5. Deploy fabio.
+6. Deploy a sample service.
 
 ### Obtain the code
 
@@ -151,3 +152,31 @@ Build 'amazon-linux-ami2' finished.
 --> amazon-linux-ami2: AMIs were created:
 us-east-1: ami-1234567890xyz
 ```
+
+### Create an EC2 instance key pair
+
+All instances of the COS can be accessed via ssh. Therefore during deployment an AWS instance key pair is needed.
+The key to be created has to have the name `kp-us-east-1-playground-instancekey`. The key is referenced during deployment using exactly this name.
+
+How to create a key pair is described at [Creating a Key Pair Using Amazon EC2](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-key-pairs.html#having-ec2-create-your-key-pair).
+
+### Deploy the infrastructure and the COS
+
+To deploy the COS we will use the `examples/root-example` since it is self contained and builds not only the COS but also the needed networking infrastructure.
+
+In this step we need the id of the AMI that was just created and the name of your AWS profile. In our example it is `ami-1234567890xyz` and `my_cos_account`.
+
+```bash
+cd ~/medium-cos/cos/examples/root-example
+# Init terraform, download pugins and modules
+terraform init
+
+# generic terraform plan call
+# terraform plan -out cos.plan -var deploy_profile=<your profile name> -var nomad_ami_id_servers=<your ami-id> -var nomad_ami_id_clients=<your ami-id>
+terraform plan -out cos.plan -var deploy_profile=my_cos_account -var nomad_ami_id_servers=ami-1234567890xyz -var nomad_ami_id_clients=ami-1234567890xyz
+
+# apply the planned changes, which means deploy the COS
+terraform apply "cos.plan"
+```
+
+terraform plan -out cos.plan -var deploy_profile=my_cos_account -var nomad_ami_id_servers=ami-0b9a4b8a33ab8e025 -var nomad_ami_id_clients=ami-0b9a4b8a33ab8e025
