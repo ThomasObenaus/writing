@@ -92,38 +92,62 @@ Before we can really start to deploy the COS we have to install some essential t
 
 The whole setup consists of terraform code and is available at `https://github.com/MatthiasScholz/cos`.
 This project is designed as a terraform module with a tailored API. It can be directly integrated into an existing infrastructure to add a COS to your infrastructure stack.
-Additionally this project provides a self contained `root-example` that deploys beside the COS also a minimal networking infrastructure.
+Additionally this project provides a self contained `root-example` that deploys beside the COS also a minimal networking infrastructure. We will use this example to deploy the COS.
 
-First lets obtain the code.
+Therefore the following steps have to be done:
+
+1. Obtain the source code from github.
+2. Build the Machine Image (AMI) for the EC2 instances.
+3. Deploy the infrastructure and the COS.
+4. Deploy fabio.
+5. Deploy a sample service.
+
+### Obtain the code
 
 ```bash
 # Create work folder
 mkdir ~/medium-cos/ && cd ~/medium-cos/
 
-# Clone the code using tag v0.0.2
-git clone --branch v0.0.2 https://github.com/MatthiasScholz/cos
+# Clone the code using tag v0.0.3
+git clone --branch v0.0.3 https://github.com/MatthiasScholz/cos
 ```
 
-```bash
-cd ~/medium-cos/cos/modules/ami2
+### Build the Machine Image
 
-```
+In the end there has to be on some instances a server- and on some a client version of consul and nomad. The nice thing here is, that both, consul and nomad are shipped as a binary which supports the client and the server mode. They just have to be called with different parameters.
+This leads to the nice situation that just one machine image has to baked. This image contains the nomad and the consul binary.
 
-## Create the Machine Image
+With this one AMI:
 
-### Prepare AWS Credentials
+- Instances having consul running in server mode and no nomad running can be launched. These are representing the consul server nodes.
+- Instances having consul running in client mode and nomad running in server mode can be launched. These are representing the nomad server nodes.
+- Instances having consul running in client mode and nomad running in client mode can be launched. These are representing the nomad client nodes.
 
-As described at [Authentication Packer](https://www.packer.io/docs/builders/amazon.html#authentication) you can use static, evironment variables or shared credentials.
+To build this AMI, first packer has to be supplied with the correct AWS credentials. As described at [Authentication Packer](https://www.packer.io/docs/builders/amazon.html#authentication) you can use static, environment variables or shared credentials.
+These can be set in a shell by simply exporting the following parameters.
 
 ```bash
 # environment variables
-export AWS_ACCESS_KEY_ID="anaccesskey"
-export AWS_SECRET_ACCESS_KEY="asecretkey"
-export AWS_DEFAULT_REGION="us-west-2"
+export AWS_ACCESS_KEY_ID=<your access key id>
+export AWS_SECRET_ACCESS_KEY=<your secret key>
+export AWS_DEFAULT_REGION=us-east-1
 ```
 
-### Build the AMI using Packer
+To build the AMI you just call:
 
 ```bash
-packer build nomad-consul-docker-ecr.json
+cd ~/medium-cos/cos/modules/ami2
+# build the
+packer build -var 'aws_region=us-east-1' -var 'ami_regions=us-east-1' nomad-consul-docker.json
+```
+
+As a result you will get the id of the created AMI.
+
+```bash
+==> amazon-linux-ami2: Deleting temporary keypair...
+Build 'amazon-linux-ami2' finished.
+
+==> Builds finished. The artifacts of successful builds are:
+--> amazon-linux-ami2: AMIs were created:
+us-east-1: ami-1234567890xyz
 ```
