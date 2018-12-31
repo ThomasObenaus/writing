@@ -90,7 +90,7 @@ Before we can really start to deploy the COS we have to install some essential t
 
 ## Deployment
 
-The whole setup consists of terraform code and is available at `https://github.com/MatthiasScholz/cos`.
+The whole setup consists of terraform code and is available at https://github.com/MatthiasScholz/cos.
 This project is designed as a terraform module with a tailored API. It can be directly integrated into an existing infrastructure to add a COS to your infrastructure stack.
 Additionally this project provides a self contained `root-example` that deploys beside the COS also a minimal networking infrastructure. We will use this example to deploy the COS.
 
@@ -193,7 +193,7 @@ Now having an empty system up and running the last missing part of the whole COS
 fabio will be deployed as the first nomad job.
 
 To interact with the nomad server you can make use of the nomad CLI locally installed on your computer. First you have to specify where the nomad CLI can find the nomad server by setting the environment variable `NOMAD_ADDR` appropriately.
-This can be done by calling `export NOMAD_ADDR=http://$(terraform output nomad_ui_alb_dns)`.
+This can be done by calling `cd ~/medium-cos/cos/examples/root-example && export NOMAD_ADDR=http://$(terraform output nomad_ui_alb_dns)`.
 With `nomad server members` you should now get a list of three nomad servers, one of them elected as leader.
 
 The nomad job description for deploying fabio is located at `~/medium-cos/cos/examples/jobs/fabio.nomad`. It deploy the raw binary of the reverse proxy, thus no docker job yet.
@@ -242,3 +242,11 @@ With `nomad run ~/medium-cos/cos/examples/jobs/fabio.nomad`, fabio will be deplo
 To test if the deployment succeed you can either open the fabio UI using `xdg-open "http://$(terraform output fabio_ui_alb_dns)"` or check the nomad UI.
 
 ![FabioDeployed](FabioDeployed.png)
+
+## Deploy a sample service
+
+Also part of the [COS project](https://github.com/MatthiasScholz/cos) at github is a nomad job description for deploying the ping-service.
+
+The ping-service is a simple service for testing purposes. When you send a request to it's endpoint, the service tries to forward this request to other instances of the ping-service. This is done for a defined number of hops/ "pings". For each hop a ping is added to the response. The last receiver in the chain stops forwarding and adds a "pong" to the concatenated message of pings.
+
+So now lets deploy the ping-service and send a request against it.
