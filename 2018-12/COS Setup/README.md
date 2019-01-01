@@ -284,3 +284,8 @@ The field `name` denotes the data-center of the ping-service instance that was h
 This test nicely shows that the service-discovery over consul and the request routing using fabio works as intended.
 
 ## Summary and Outlook
+
+In this post I showed how to set up a Container Orchestration System as described at [How a Container Orchestration System could look like](https://link.medium.com/cRyTWm2N2S).
+Using the code available at https://github.com/MatthiasScholz/cos you can easily try it on your own. Deploy the root-example, run your services, extend the COS by adding monitoring and logging, etc. Furthermore you can use the COS terraform module and integrate it directly into your infrastructure.
+
+In the next post I will show how a good, default nomad job description could look like in order to get a resilient system running.
