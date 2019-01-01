@@ -2,15 +2,15 @@
 
 In my previous post [How a Container Orchestration System could look like](https://link.medium.com/cRyTWm2N2S), I showed an architectural overview and discussed the most important components of such a system. It is based on [Nomad](https://www.nomadproject.io) as job scheduler, [Consul](https://www.consul.io) for service discovery and [fabio](https://fabiolb.net) for request routing and load balancing.
 
-In this post I will describe step by step how to set up/ deploy this COS on an empty AWS account using [terraform](https://www.terraform.io).
+In this post I will describe step by step how to set up this COS on an empty AWS account using [terraform](https://www.terraform.io).
 
-_All steps described and scripts used in this post are tested with an ubuntu 16.04 but should also work on other linux based systems._
+_All steps described and scripts used in this post are tested with an ubuntu 16.04, but should also work on other linux based systems._
 
 ![Cluster_Orchestration_System_Stack](Cluster_Orchestration_System_Stack.png)
 
 ## Prerequisites
 
-Before we can start with the rollout of COS we have to prepare, by creating an AWS account and install the tools we need for the job.
+Before you can start with the rollout of the COS you have to prepare, by creating an AWS account and install the tools needed for the job.
 
 ### AWS Account and Credentials Profile
 
@@ -23,14 +23,14 @@ Having an account you have to create AWS access keys using the AWS Web console:
 2. Create a new user for your account, by following this [tutorial](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_users_create.html).
 3. Create a new access key for this user, by following this [tutorial](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_access-keys.html#Using_CreateAccessKey).
 
-When completing this steps, don't forget to actually download the keys. This is the only time you can do it. If you loose your keys you have to create a new one following the same steps.
+When completing this steps, don't forget to actually download the keys. This is the only time you can do this. If you loose your keys you have to create a new one following the same steps.
 
 ![Access Keys](AccessKey.png)
 
 The downloaded file `accessKeys.csv` contains the `Access key ID` and the `Secret access key`.
 
-Now having the access key we can create an AWS profile. Such a profile is just a name referencing access keys and some options of an AWS account. Therefore you just have to create/ edit `~/.aws/credentials`.
-In this file you just create a new section named `my_cos_account` pasting in the `Access key ID`, the `Secret access key` and save it.
+Now having the key we can create an AWS profile. Such a profile is just a name referencing access keys and some options for the AWS account to be used. Therefore you have to create or edit the file `~/.aws/credentials`.
+In this file you just add a new section named `my_cos_account` pasting in the `Access key ID`, the `Secret access key` and save the file.
 
 ```bash
 [my_cos_account]
@@ -42,9 +42,9 @@ Now a profile named `my_cos_account` is available and will be used to directly c
 
 ### Tools
 
-Before we can really start to deploy the COS we have to install some essential tools.
+Before you can really start to deploy the COS you have to install some essential tools.
 
-1. **Terraform**: Is needed to create/ deploy AWS resources. Here **version 0.11.11** is used.
+1. **Terraform**: Is needed to create AWS resources. Here **version 0.11.11** is used.
 
    - Download the binary from [Terraform Downloads](https://www.terraform.io/downloads.html).
    - Unzip and install it.
@@ -95,8 +95,8 @@ Before we can really start to deploy the COS we have to install some essential t
 ## Deployment
 
 The whole setup consists of terraform code and is available at https://github.com/MatthiasScholz/cos.
-This project is designed as a terraform module with a tailored API. It can be directly integrated into an existing infrastructure to add a COS to your infrastructure stack.
-Additionally this project provides a self contained `root-example` that deploys beside the COS also a minimal networking infrastructure. We will use this example to deploy the COS.
+This project is designed as a terraform module with a tailored API. It can be directly integrated into an existing infrastructure adding there a Container Orchestration System.
+Additionally this project provides a self contained `root-example`, that deploys beside the COS, also a minimal networking infrastructure. This example will be used here to roll out the system.
 
 Therefore the following steps have to be done:
 
@@ -119,14 +119,14 @@ git clone --branch v0.0.3 https://github.com/MatthiasScholz/cos
 
 ### Build the Machine Image
 
-In the end there has to be on some instances a server- and on some a client version of consul and nomad. The nice thing here is, that both, consul and nomad are shipped as a binary which supports the client and the server mode. They just have to be called with different parameters.
+In the end, there has to be on some instances a server version and on some a client version of consul and nomad. The good thing here is, that both, consul and nomad are shipped as a binary which supports the client- and the server mode. They just have to be called with different parameters.
 This leads to the nice situation that just one machine image has to baked. This image contains the nomad and the consul binary.
 
 With this one AMI:
 
-- Instances having consul running in server mode and no nomad running can be launched. These are representing the consul server nodes.
-- Instances having consul running in client mode and nomad running in server mode can be launched. These are representing the nomad server nodes.
-- Instances having consul running in client mode and nomad running in client mode can be launched. These are representing the nomad client nodes.
+- Instances, having consul running in server mode and no nomad running, can be launched. These are representing the consul server nodes.
+- Instances, having consul running in client mode and nomad running in server mode, can be launched. These are representing the nomad server nodes.
+- Instances, having consul running in client mode and nomad running in client mode, can be launched. These are representing the nomad client nodes.
 
 To build this AMI, first packer has to be supplied with the correct AWS credentials. As described at [Authentication Packer](https://www.packer.io/docs/builders/amazon.html#authentication) you can use static, environment variables or shared credentials.
 These can be set in a shell by simply exporting the following parameters.
@@ -164,11 +164,11 @@ The key to be created has to have the name `kp-us-east-1-playground-instancekey`
 
 How to create a key pair is described at [Creating a Key Pair Using Amazon EC2](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-key-pairs.html#having-ec2-create-your-key-pair).
 
-### Deploy the infrastructure and the COS
+### Deploy the COS
 
-To deploy the COS we will use the `examples/root-example` since it is self contained and builds not only the COS but also the needed networking infrastructure.
+For the deployment the `examples/root-example` will be used. It is self contained and builds not only the COS itself, but also the underlying networking infrastructure.
 
-In this step we need the id of the AMI that was just created and the name of your AWS profile. In our example it is `ami-1234567890xyz` and `my_cos_account`.
+In this step you need the id of the AMI that was previously created and the name of your AWS profile. In our example the AMI id is `ami-1234567890xyz` and the profile is named `my_cos_account`.
 
 ```bash
 cd ~/medium-cos/cos/examples/root-example
@@ -187,20 +187,22 @@ After successful deployment terraform prints some useful parameters to the termi
 
 ![TF_Output](TF_Output.png)
 
-These can be used to open the nomad UI `xdg-open "http://$(terraform output nomad_ui_alb_dns)"` or the consul UI `xdg-open "http://$(terraform output consul_ui_alb_dns)"`.
+These can be used to open the nomad UI `xdg-open "http://$(terraform output nomad_ui_alb_dns)"` or the consul UI `xdg-open "http://$(terraform output consul_ui_alb_dns)"` in your browser.
 
 ![Nomad UI](NomadUi.png)
 
+The image above shows the web UI of the empty, but running nomad cluster.
+
 ### Deploy fabio
 
-Now having an empty system up and running the last missing part of the whole COS is fabio as the ingress traffic controller.
-fabio will be deployed as the first nomad job.
+Now having an empty system up and running the last missing part to complete the COS setup, is fabio as the ingress traffic controller.
+Fabio will be deployed as the first nomad job.
 
 To interact with the nomad server you can make use of the nomad CLI locally installed on your computer. First you have to specify where the nomad CLI can find the nomad server by setting the environment variable `NOMAD_ADDR` appropriately.
 This can be done by calling `cd ~/medium-cos/cos/examples/root-example && export NOMAD_ADDR=http://$(terraform output nomad_ui_alb_dns)`.
 With `nomad server members` you should now get a list of three nomad servers, one of them elected as leader.
 
-The nomad job description for deploying fabio is located at `~/medium-cos/cos/examples/jobs/fabio.nomad`. It deploy the raw binary of the reverse proxy, thus no docker job yet.
+The nomad job description for deploying fabio is located at `~/medium-cos/cos/examples/jobs/fabio.nomad`. It will roll out the raw binary of the reverse proxy, thus no docker job yet.
 
 ```bash
 job "fabio" {
@@ -233,12 +235,12 @@ job "fabio" {
             static = 9999
           }
           port "ui" {
-            static = 9998
+            static = 9998s
           }
         }
       }
     }
-  }
+  }s
 }
 ```
 
@@ -247,23 +249,25 @@ To test if the deployment succeed you can either open the fabio UI using `xdg-op
 
 ![FabioDeployed](FabioDeployed.png)
 
-## Deploy a sample service
+In the image above, fabio running as nomad system job is shown. Thus the deployment was successful.
 
-Also part of the [COS project](https://github.com/MatthiasScholz/cos) at github is a nomad job description for deploying the ping-service.
+## Deploy a Sample Service
 
-The ping-service is a simple service for testing purposes. When you send a request to it's endpoint, the service tries to forward this request to other instances of the ping-service. This is done for a defined number of hops/ "pings". For each hop a ping is added to the response. The last receiver in the chain stops forwarding and adds a "pong" to the concatenated message of pings.
+Also part of the [COS project](https://github.com/MatthiasScholz/cos) at github is a nomad job description for deploying a sample service, the ping-service.
+
+The ping-service is a simple service for testing purposes. When you send a request to it's endpoint, the service tries to forward this request to other instances of the ping-service. This is done for a defined number of hops or "pings". For each hop a "ping" is added to the response. The last receiver in the chain stops forwarding and adds a "pong" to concatenated message list.
 
 So now lets deploy the ping-service and send a request against it.
-By calling `nomad run ~/medium-cos/cos/examples/jobs/ping_service.nomad` the four instances of the ping-service will be deployed to the COS.
+By calling `nomad run ~/medium-cos/cos/examples/jobs/ping_service.nomad` four instances of the ping-service will be deployed to the COS.
 Looking at consul one can see that beside, consul, nomad, nomad-clients and fabio also the ping-service is automatically registered by nomad. Thus the four deployed ping-service instances can be found via service discovery.
 
-Each instance of the service runs in one of the four data centers of the COS. In public-services, private-services, content-connector or backoffice data center. More details about the available data centers can be found at [COS Architecture](https://github.com/MatthiasScholz/cos/blob/master/README.md).
+Each instance of the service runs in one of the four data centers of the COS, in public-services, private-services, content-connector or backoffice data center. More details about the available data centers can be found at [COS Architecture](https://github.com/MatthiasScholz/cos/blob/master/README.md).
 
 ![ConsulUI](ConsulUI.png)
 
-One side note here as you can see in the picture above is the tag `urlprefix-/ping` which was added for the ping-service. This tag is needed to tell fabio to which service he should route all requests that hit the end-point `/ping`. More details about this can be found at [Fabio Quickstart](https://fabiolb.net/quickstart/).
+Side note: As you can see in the image above, the tag `urlprefix-/ping` was added for the ping-service. This tag is needed to tell fabio to which service he should route all requests that hit the endpoint `/ping`. More details about this can be found at [fabio quickstart](https://fabiolb.net/quickstart/).
 
-To test if the ping-service was deployed correctly, if he can find the other instances using the consul catalogue API and if fabio is able to route a request to a ping-service instance you just have to send a GET request against the `/ping` end-point.
+To test if the ping-service was deployed correctly, if he can find the other instances using the consul catalogue API and if fabio is able to route a request to a ping-service instance, you just have to send a GET request against the `/ping` endpoint.
 
 ```bash
 # Obtain DNS name of the ingress ALB
@@ -283,13 +287,13 @@ As a result you get sth. like:
 }
 ```
 
-The field `name` denotes the data-center of the ping-service instance that was hit first by the request (hop number one). In the `message` field you can see how the request propagates through the deployed instances of the service. From the private-services, to public-services, to content-connector, ..., to finally stop after 10 hops with the PONG message.
+The field `name` denotes the data center of the ping-service instance that was hit first by the request (hop number one). In the `message` field you can see how the request propagates through the deployed instances of the service. From the private-services, to public-services, to content-connector, ..., to finally stop after 10 hops with the PONG message.
 
 This test nicely shows that the service-discovery over consul and the request routing using fabio works as intended.
 
 ## Summary and Outlook
 
-In this post I showed how to set up a Container Orchestration System as described at [How a Container Orchestration System could look like](https://link.medium.com/cRyTWm2N2S). I started with explaining the installation of the basic setup. Followed by building up the COS on an empty AWS account, using the terraform code available at https://github.com/MatthiasScholz/cos and deploying Fabio. And finally to test the system a first simple service was rolled out.
+In this post I showed how to set up a Container Orchestration System as described at [How a Container Orchestration System could look like](https://link.medium.com/cRyTWm2N2S). I started with explaining the installation of the basic setup. Followed by building up the COS on an empty AWS account, using the terraform code available at https://github.com/MatthiasScholz/cos and deploying fabio. Finally to use the system, a first sample service was rolled out and tested.
 
 Making use of https://github.com/MatthiasScholz/cos you can easily try it on your own. Deploy the root-example, run your services, extend the COS by adding monitoring and logging, etc. Furthermore you can use the COS terraform module and integrate it directly into your infrastructure.
 
