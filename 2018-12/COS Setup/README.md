@@ -6,7 +6,11 @@ In this post I will describe step by step how to set up/ deploy this COS on an e
 
 _All steps described and scripts used in this post are tested with an ubuntu 16.04 but should also work on other linux based systems._
 
+![Cluster_Orchestration_System_Stack](Cluster_Orchestration_System_Stack.png)
+
 ## Prerequisites
+
+Before we can start with the rollout of COS we have to prepare, by creating an AWS account and install the tools we need for the job.
 
 ### AWS Account and Credentials Profile
 
@@ -285,7 +289,8 @@ This test nicely shows that the service-discovery over consul and the request ro
 
 ## Summary and Outlook
 
-In this post I showed how to set up a Container Orchestration System as described at [How a Container Orchestration System could look like](https://link.medium.com/cRyTWm2N2S).
-Using the code available at https://github.com/MatthiasScholz/cos you can easily try it on your own. Deploy the root-example, run your services, extend the COS by adding monitoring and logging, etc. Furthermore you can use the COS terraform module and integrate it directly into your infrastructure.
+In this post I showed how to set up a Container Orchestration System as described at [How a Container Orchestration System could look like](https://link.medium.com/cRyTWm2N2S). I started with explaining the installation of the basic setup. Followed by building up the COS on an empty AWS account, using the terraform code available at https://github.com/MatthiasScholz/cos and deploying Fabio. And finally to test the system a first simple service was rolled out.
+
+Making use of https://github.com/MatthiasScholz/cos you can easily try it on your own. Deploy the root-example, run your services, extend the COS by adding monitoring and logging, etc. Furthermore you can use the COS terraform module and integrate it directly into your infrastructure.
 
 In the next post I will show how a good, default nomad job description could look like in order to get a resilient system running.
