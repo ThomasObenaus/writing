@@ -1,4 +1,4 @@
-# How to set up a Container Orchestration System (COS)
+# How to Set Up a Container Orchestration System (COS)
 
 In my previous post [How a Container Orchestration System could look like](https://link.medium.com/cRyTWm2N2S), I showed an architectural overview and discussed the most important components of such a system. It is based on [Nomad](https://www.nomadproject.io) as job scheduler, [Consul](https://www.consul.io) for service discovery and [fabio](https://fabiolb.net) for request routing and load balancing.
 
@@ -10,7 +10,7 @@ _All steps described and scripts used in this post are tested with an ubuntu 16.
 
 ## Prerequisites
 
-Before you can start with the rollout of the COS you have to prepare, by creating an AWS account and install the tools needed for the job.
+Before you can start with the rollout of the COS you have to prepare, by creating an AWS account and installing the tools needed for the job.
 
 ### AWS Account and Credentials Profile
 
@@ -29,7 +29,7 @@ When completing this steps, don't forget to actually download the keys. This is 
 
 The downloaded file `accessKeys.csv` contains the `Access key ID` and the `Secret access key`.
 
-Now having the key we can create an AWS profile. Such a profile is just a name referencing access keys and some options for the AWS account to be used. Therefore you have to create or edit the file `~/.aws/credentials`.
+Now having the key you can create an AWS profile. Such a profile is just a name referencing access keys and some options for the AWS account to be used. Therefore you have to create or edit the file `~/.aws/credentials`.
 In this file you just add a new section named `my_cos_account` pasting in the `Access key ID`, the `Secret access key` and save the file.
 
 ```bash
@@ -38,7 +38,7 @@ aws_access_key_id = PASTE HERE YOUR ACCESS KEY
 aws_secret_access_key = PASTE HERE YOUR SECRET KEY
 ```
 
-Now a profile named `my_cos_account` is available and will be used to directly create the AWS resources that are needed to set up the COS.
+Now a profile named `my_cos_account` is available and will be used to directly create the AWS resources that are needed to build up the COS.
 
 ### Tools
 
@@ -107,7 +107,7 @@ Therefore the following steps have to be done:
 5. Deploy fabio.
 6. Deploy a sample service.
 
-### Obtain the code
+### Obtain the Code
 
 ```bash
 # Create work folder
@@ -124,9 +124,9 @@ This leads to the nice situation that just one machine image has to baked. This 
 
 With this one AMI:
 
-- Instances, having consul running in server mode and no nomad running, can be launched. These are representing the consul server nodes.
-- Instances, having consul running in client mode and nomad running in server mode, can be launched. These are representing the nomad server nodes.
-- Instances, having consul running in client mode and nomad running in client mode, can be launched. These are representing the nomad client nodes.
+- Instances, having consul running in server mode and no nomad running, can be launched. These are representing the **consul server nodes**.
+- Instances, having consul running in client mode and nomad running in server mode, can be launched. These are representing the **nomad server nodes**.
+- Instances, having consul running in client mode and nomad running in client mode, can be launched. These are representing the **nomad client nodes**.
 
 To build this AMI, first packer has to be supplied with the correct AWS credentials. As described at [Authentication Packer](https://www.packer.io/docs/builders/amazon.html#authentication) you can use static, environment variables or shared credentials.
 These can be set in a shell by simply exporting the following parameters.
@@ -157,7 +157,7 @@ Build 'amazon-linux-ami2' finished.
 us-east-1: ami-1234567890xyz
 ```
 
-### Create an EC2 instance key pair
+### Create an EC2 Instance Key Pair
 
 All instances of the COS can be accessed via ssh. Therefore during deployment an AWS instance key pair is needed.
 The key to be created has to have the name `kp-us-east-1-playground-instancekey`. The key is referenced during deployment using exactly this name.
@@ -193,7 +193,7 @@ These can be used to open the nomad UI `xdg-open "http://$(terraform output noma
 
 The image above shows the web UI of the empty, but running nomad cluster.
 
-### Deploy fabio
+### Deploy Fabio
 
 Now having an empty system up and running the last missing part to complete the COS setup, is fabio as the ingress traffic controller.
 Fabio will be deployed as the first nomad job.
@@ -245,7 +245,7 @@ job "fabio" {
 ```
 
 With `nomad run ~/medium-cos/cos/examples/jobs/fabio.nomad`, fabio will be deployed to nomad to complete the COS setup.
-To test if the deployment succeed you can either open the fabio UI using `xdg-open "http://$(terraform output fabio_ui_alb_dns)"` or check the nomad UI.
+To test if the deployment succeeded you can either open the fabio UI using `xdg-open "http://$(terraform output fabio_ui_alb_dns)"` or check the nomad UI.
 
 ![FabioDeployed](FabioDeployed.png)
 
@@ -295,6 +295,6 @@ This test nicely shows that the service-discovery over consul and the request ro
 
 In this post I showed how to set up a Container Orchestration System as described at [How a Container Orchestration System could look like](https://link.medium.com/cRyTWm2N2S). I started with explaining the installation of the basic setup. Followed by building up the COS on an empty AWS account, using the terraform code available at https://github.com/MatthiasScholz/cos and deploying fabio. Finally to use the system, a first sample service was rolled out and tested.
 
-Making use of https://github.com/MatthiasScholz/cos you can easily try it on your own. Deploy the root-example, run your services, extend the COS by adding monitoring and logging, etc. Furthermore you can use the COS terraform module and integrate it directly into your infrastructure.
+Making use of the [COS Project](https://github.com/MatthiasScholz/cos) you can easily try it on your own. Deploy the root-example, run your services, extend the COS by adding monitoring and logging, etc. Furthermore you can use the COS terraform module and integrate it directly into your infrastructure.
 
 In the next post I will show how a good, default nomad job description could look like in order to get a resilient system running.
