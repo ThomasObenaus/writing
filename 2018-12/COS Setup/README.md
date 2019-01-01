@@ -250,3 +250,37 @@ Also part of the [COS project](https://github.com/MatthiasScholz/cos) at github 
 The ping-service is a simple service for testing purposes. When you send a request to it's endpoint, the service tries to forward this request to other instances of the ping-service. This is done for a defined number of hops/ "pings". For each hop a ping is added to the response. The last receiver in the chain stops forwarding and adds a "pong" to the concatenated message of pings.
 
 So now lets deploy the ping-service and send a request against it.
+By calling `nomad run ~/medium-cos/cos/examples/jobs/ping_service.nomad` the four instances of the ping-service will be deployed to the COS.
+Looking at consul one can see that beside, consul, nomad, nomad-clients and fabio also the ping-service is automatically registered by nomad. Thus the four deployed ping-service instances can be found via service discovery.
+
+Each instance of the service runs in one of the four data centers of the COS. In public-services, private-services, content-connector or backoffice data center. More details about the available data centers can be found at [COS Architecture](https://github.com/MatthiasScholz/cos/blob/master/README.md).
+
+![ConsulUI](ConsulUI.png)
+
+One side note here as you can see in the picture above is the tag `urlprefix-/ping` which was added for the ping-service. This tag is needed to tell fabio to which service he should route all requests that hit the end-point `/ping`. More details about this can be found at [Fabio Quickstart](https://fabiolb.net/quickstart/).
+
+To test if the ping-service was deployed correctly, if he can find the other instances using the consul catalogue API and if fabio is able to route a request to a ping-service instance you just have to send a GET request against the `/ping` end-point.
+
+```bash
+# Obtain DNS name of the ingress ALB
+export IGRESS_ALB=http://$(terraform output ingress_alb_dns)
+
+# Send the test request once against the ping-service running in the COS
+curl $IGRESS_ALB/ping
+```
+
+As a result you get sth. like:
+
+```bash
+{
+  "message": "/[private-services,v1]/[public-services,v1]/[content-connector,v1]/.../[content-connector,v1](PONG)",
+  "name": "private-services",
+  "version": "v1"
+}
+```
+
+The field `name` denotes the data-center of the ping-service instance that was hit first by the request (hop number one). In the `message` field you can see how the request propagates through the deployed instances of the service. From the private-services, to public-services, to content-connector, ..., to finally stop after 10 hops with the PONG message.
+
+This test nicely shows that the service-discovery over consul and the request routing using fabio works as intended.
+
+## Summary and Outlook
