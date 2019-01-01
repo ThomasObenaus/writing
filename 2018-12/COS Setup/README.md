@@ -1,8 +1,8 @@
-# How to Set Up a Container Orchestration System (COS)
+# How to Set Up a Container Orchestration System
 
-In my previous post [How a Container Orchestration System could look like](https://link.medium.com/cRyTWm2N2S), I showed an architectural overview and discussed the most important components of such a system. It is based on [Nomad](https://www.nomadproject.io) as job scheduler, [Consul](https://www.consul.io) for service discovery and [fabio](https://fabiolb.net) for request routing and load balancing.
+In my previous post [How a Container Orchestration System Could Look Like](https://link.medium.com/cRyTWm2N2S), I showed an architectural overview and discussed the most important components of such a system. It is based on [Nomad](https://www.nomadproject.io) as job scheduler, [Consul](https://www.consul.io) for service discovery and [fabio](https://fabiolb.net) for request routing and load balancing.
 
-In this post I will describe step by step how to set up this COS on an empty AWS account using [terraform](https://www.terraform.io).
+In this post I will describe step by step how to set up this Container Orchestration System (COS) on an empty AWS account using [terraform](https://www.terraform.io).
 
 _All steps described and scripts used in this post are tested with an ubuntu 16.04, but should also work on other linux based systems._
 
