@@ -291,6 +291,16 @@ The field `name` denotes the data center of the ping-service instance that was h
 
 This test nicely shows that the service-discovery over consul and the request routing using fabio works as intended.
 
+### Cleanup
+
+To avoid paying money for the AWS resources if you don't use the COS any more you should tear it down.
+With terraform this is really easy. The following command will remove all infrastructure components from your AWS account, but only those you created with terraform in this how-to.
+
+```bash
+cd ~/medium-cos/cos/examples/root-example
+terraform destroy -var deploy_profile=my_cos_account
+```
+
 ## Summary and Outlook
 
 In this post I showed how to set up a Container Orchestration System as described at [How a Container Orchestration System could look like](https://link.medium.com/cRyTWm2N2S). I started with explaining the installation of the basic setup. Followed by building up the COS on an empty AWS account, using the terraform code available at https://github.com/MatthiasScholz/cos and deploying fabio. Finally to use the system, a first sample service was rolled out and tested.
