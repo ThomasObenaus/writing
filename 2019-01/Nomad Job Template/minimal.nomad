@@ -7,30 +7,26 @@ job "fail-service" {
     task "fail-service" {
       driver = "docker"
       config {
-        image = "thobe/fail_service:latest"
+        image = "thobe/fail_service:v0.0.11"
         port_map = {
           http = 8080
         }
       }
 
-      # Register at consul
+      # Documentation for service stanza:
+      # https://www.nomadproject.io/docs/job-specification/service.html
       service {
-        name = "${TASK}"
-        port = "http"
+        name = "${TASK}"  # Specifies the name this service will be advertised as in Consul
+        port = "http"     # Specifies the port to advertise for this service
         check {
-          port     = "http"
-          type     = "http"
-          path     = "/health"
-          method   = "GET"
-          interval = "10s"
-          timeout  = "2s"
+          name     = "fail_service health using http endpoint '/health'"  # Name of the health check
+          port     = "http"                                               # Specifies the label of the port on which the check will be performed.
+          type     = "http"                                               # This indicates the check types supported by Nomad. Valid options are grpc, http, script, and tcp. 
+          path     = "/health"                                            # Specifies the path of the HTTP endpoint which Consul will query to query the health of a service.
+          method   = "GET"                                                # Method used for http checks
+          interval = "10s"                                                # Specifies the frequency of the health checks that Consul will perform. 
+          timeout  = "2s"                                                 # Specifies how long Consul will wait for a health check query to succeed.
         }
-      }
-
-      env {
-        HEALTHY_IN    = 0,
-        HEALTHY_FOR   = 0,
-        UNHEALTHY_FOR = 0,
       }
 
       resources {
