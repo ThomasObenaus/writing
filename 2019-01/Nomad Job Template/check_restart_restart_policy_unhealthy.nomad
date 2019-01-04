@@ -4,6 +4,15 @@ job "fail-service" {
   type = "service"
 
   group "fail-service" {
+    # Documentation of restart_stanza
+    # https://www.nomadproject.io/docs/job-specification/restart.html
+    restart {
+      interval = "10m"  # The duration which begins when the first task starts and ensures that only attempts number of restarts happens within it. 
+      attempts = 2      # The number of restarts allowed in the configured interval.
+      delay    = "15s"  # Specifies the duration to wait before restarting a task. 
+      mode     = "fail"
+    }
+
     task "fail-service" {
       driver = "docker"
       config {
@@ -26,11 +35,9 @@ job "fail-service" {
           timeout  = "2s"
         }
 
-        # Documentation of check_restart_stanza
-        # https://www.nomadproject.io/docs/job-specification/check_restart.html
         check_restart {
-          limit = 3               # Restart task when a health check has failed limit times.
-          grace = "10s"            # Duration to wait after a task starts or restarts before checking its health.
+          limit = 3
+          grace = "10s"
           ignore_warnings = false
         }
       }
