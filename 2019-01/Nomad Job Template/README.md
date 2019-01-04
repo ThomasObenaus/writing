@@ -74,4 +74,8 @@ specify interval = "10m" # Carefully if it is too small the unhealthy service wi
 - auto_revert
 - screenshot last stable
 
+## Canary
+
+## Blue Green
+
 ## Migration
