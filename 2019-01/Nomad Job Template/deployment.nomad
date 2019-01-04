@@ -3,20 +3,18 @@ job "fail-service" {
 
   type = "service"
 
-  # Documentation of the reshedule_stanza
-  # https://www.nomadproject.io/docs/job-specification/reschedule.html
   reschedule {
-    delay = "30s"               # Duration to wait before attempting to reschedule a failed task.
-    delay_function = "constant" # Function that is used to calculate subsequent reschedule delays.
-    unlimited = true            # Enables unlimited reschedule attempts.
+    delay = "30s"
+    delay_function = "constant"
+    unlimited = true
   }
 
   group "fail-service" {
 
     restart {
-      interval = "10m"  
-      attempts = 2      
-      delay    = "15s"  
+      interval = "10m"
+      attempts = 2
+      delay    = "15s"
       mode     = "fail"
     }
 
