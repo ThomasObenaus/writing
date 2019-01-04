@@ -54,4 +54,12 @@ restart {
 
 specify interval = "10m" # Carefully if it is too small the unhealthy service will be restared forever
 
-4.
+4. Reschedule
+
+- should avoid unlimited=false and attempts=x
+- will leave job in failed state forever even a redeployment is not possible
+- to fix you have to call nomad job stop fail-service
+- and then nomad run fail-service.nomad
+  --> create bug on nomad
+
+## Deployments
