@@ -76,6 +76,11 @@ specify interval = "10m" # Carefully if it is too small the unhealthy service wi
 
 ## Canary
 
+- nomad deployment promote <deployment id>
+- nomad deployment promote 6bd89b2d
+
 ## Blue Green
+
+- canaray == count
 
 ## Migration

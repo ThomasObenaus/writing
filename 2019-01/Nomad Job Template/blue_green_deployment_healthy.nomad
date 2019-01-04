@@ -10,17 +10,18 @@ job "fail-service" {
   }
 
   update {
-    max_parallel      = 1         
-    health_check      = "checks"  
-    min_healthy_time  = "10s"     
-    healthy_deadline  = "5m"      
-    progress_deadline = "10m"     
-    auto_revert       = true      
-    canary            = 0         
-    stagger           = "30s"     
+    max_parallel      = 1
+    health_check      = "checks"
+    min_healthy_time  = "10s"
+    healthy_deadline  = "5m"
+    progress_deadline = "10m"
+    auto_revert       = true
+    canary            = 3
+    stagger           = "30s"
   }
 
   group "fail-service" {
+    count = 3
 
     restart {
       interval = "10m"
@@ -59,7 +60,7 @@ job "fail-service" {
       }
 
       env {
-        HEALTHY_IN    = -1,
+        HEALTHY_IN    = 0,
       }
 
       resources {
