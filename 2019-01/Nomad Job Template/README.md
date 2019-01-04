@@ -69,4 +69,9 @@ specify interval = "10m" # Carefully if it is too small the unhealthy service wi
 
 ## Deployments
 
+### Rolling
+
+- auto_revert
+- screenshot last stable
+
 ## Migration
