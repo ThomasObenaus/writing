@@ -4,7 +4,7 @@ job "fail-service" {
   type = "service"
 
   group "fail-service" {
-    count = 3
+    count = 1
 
     task "fail-service" {
       driver = "docker"
@@ -31,7 +31,8 @@ job "fail-service" {
       }
 
       env {
-        HEALTHY_IN    = -1, # Gets never healthy
+        UNHEALTHY_FOR = -1,
+        HEALTHY_FOR   = 30,
       }
 
       resources {

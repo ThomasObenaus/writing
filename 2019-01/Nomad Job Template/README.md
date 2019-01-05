@@ -7,11 +7,12 @@ To get this, again, you can implement the needed parts in each of your component
 [Nomad](https://www.nomadproject.io) in particular covers three scenarios which would lead to potential downtime.
 These are issues that can be mitigated or even solved using nomad:
 
-1. Dead Service - An already deployed and running version of the service gets unresponsive or unhealthy over time.
-2. Dead Node - On a nomad client node something is completely broken. For example the docker daemon does not work any more.
-3. Faulty Service Version - The latest commit introduces a bug that leads to instability of the service.
+1. Unresponsive Service - An already deployed and running version of the service gets unresponsive or unhealthy over time.
+2. Dead Service - An already deployed and running version of the service gets unresponsive or unhealthy over time.
+3. Dead Node - On a nomad client node something is completely broken. For example the docker daemon does not work any more.
+4. Faulty Service Version - The latest commit introduces a bug that leads to instability of the service.
 
-Of course, those three situations can be solved by an operator, who just restarts the service (1), moves the service to a healthy node (2) and rolls back the service to a previously deployed version (3). But as we all know machines are better in doing repetitive tasks and are less error prone there. So lets make use of the features of the machine called nomad and automate this kind of self healing.
+Of course, those four situations can be solved by an operator, who just restarts the service (1, 2), moves the service to a healthy node (3) and rolls back the service to a previously deployed version (4). But as we all know machines are better in doing repetitive tasks and are less error prone there. So lets make use of the features of the machine called nomad and automate this kind of self healing.
 
 **In this post I want to present and discuss a nomad job definition that can be used as default template for most applications**. Of course there are parameters that have to be adjusted to your needs, but I want to line out what could be a good starting point in order to get a resilient application as described before.
 
@@ -40,14 +41,14 @@ To get the service it can be easily be build running `make build` and even bette
 
 Which leads us to our first minimal nomad job file definition `minimal.nomad`.
 
-```yaml
+```bash
 job "fail-service" {
   datacenters = ["public-services"]
 
   type = "service"
 
   group "fail-service" {
-    count = 3
+    count = 1
 
     task "fail-service" {
       driver = "docker"
@@ -63,7 +64,7 @@ job "fail-service" {
       service {
         name = "${TASK}"
         port = "http"
-        tags = ["urlprefix-/fail-service strip=/fail-service"] # fabio
+        tags = ["urlprefix-/fail-service strip=/fail-service"]
         check {
           name     = "fail_service health using http endpoint '/health'"
           port     = "http"
@@ -102,9 +103,65 @@ With `tags = ["urlprefix-/fail-service strip=/fail-service"] # fabio` we specifi
 For being able to actually deploy the nomad job file that is developed here, a COS as described at [How a Container Orchestration System Could Look Like](https://medium.com/@obenaus.thomas/how-a-production-ready-container-orchestration-system-could-look-like-6f92b81a3319) is needed. You either can set one up in an AWS account, following the tutorial [How to Set Up a Container Orchestration System](https://medium.com/@obenaus.thomas/how-to-set-up-a-container-orchestration-system-cos-c5805790f0c1) or you can make use of nomads dev-mode.
 How to use the dev-mode is described at [COS Project, devmode](https://github.com/MatthiasScholz/cos/tree/f/script_for_devmode/examples/devmode). There you simply have to call the provided script `./devmode <host-ip-addr> public-services`. This spins up a consul and a nomad instance and provides a nomad job file for fabio deployment.
 
-Now we simply can deploy the first version by running `nomad run minimal.nomad`. Then with `watch -x curl http://\<cluster-address\>:9999/fail-service/health` you get back constantly a `200_OK` and `{"message":"Ok","ok":true}`.
+Now we simply can deploy the first version by running `nomad run minimal.nomad`. Then with `watch -x curl -s http://\<cluster-address\>:9999/fail-service/health` you get back constantly a `200_OK` and `{"message":"Ok","ok":true}`.
 
 ## Adding Resilience
+
+Now lets assume our service behaves somehow problematic - it gets unhealthy after 30s. This can be simulated by replacing the environment variable definition
+
+```bash
+env { HEALTHY_FOR    = -1 }
+```
+
+with
+
+```bash
+env {
+  UNHEALTHY_FOR = -1,
+  HEALTHY_FOR   = 30,
+}
+```
+
+in the first job file and save it as `minimal_unhealthy.nomad`. With the deployment of this new version (`nomad run minimal_unhealthy.nomad`) you can see how the curl call stops returning messages. The reason for this is that fabio won't route any traffic to services that are unhealthy in the consul service catalog. This bad situation now will last forever since no one is here to stop or restart the faulty service.
+Here nomad offers restart and rescheduling features. [Building Resilient Infrastructure with Nomad: Restarting tasks](https://www.hashicorp.com/blog/resilient-infrastructure-with-nomad-restarting-tasks) gives a nice explanation how failed or unresponsive jobs can be automatically restarted or even rescheduled on other nodes.
+
+### Restart failed/ unresponsive Jobs
+
+With the `job > group > task > service > check{...}` section, as part of the [service stanza](https://www.nomadproject.io/docs/job-specification/service.html)), nomad already knows how check the service health state. By adding the [check_restart stanza](https://www.nomadproject.io/docs/job-specification/check_restart.html) to the service definition, nomad knows when to kill a unresponsive service - how many failed health checks are enough to treat a service as unresponsive and "ready to be killed".
+Then with the addition of the [restart stanza](https://www.nomadproject.io/docs/job-specification/restart.html) to the group definition you can control when and how nomad shall restart a killed service. This restart policy applies to services killed by nomad due to be unresponsive or exceeding memory limits and to those who just crashed.
+
+The adjusted nomad job file `check_restart_unhealthy.nomad` now looks like and can be deployed via `nomad run check_restart_unhealthy.nomad`.
+
+```bash
+job "fail-service" {
+  [..]
+  group "fail-service" {
+    count = 1
+
+    # New restart stanza/ policy
+    restart {
+      interval = "10m"
+      attempts = 2
+      delay    = "15s"
+      mode     = "fail"
+    }
+    # New restart stanza/ policy
+
+    task "fail-service" {
+      [..]
+      service {
+        [..]
+        # New check_restart stanza
+        check_restart {
+          limit = 3
+          grace = "10s"
+          ignore_warnings = false
+        }
+        # New check_restart stanza
+      [..]
+```
+
+# BACKLOG
 
 1. minimal unhealthy job file
    - curl over fabio is NOT possible
