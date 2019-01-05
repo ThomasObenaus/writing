@@ -4,6 +4,8 @@ job "fail-service" {
   type = "service"
 
   group "fail-service" {
+    count = 3
+
     # Documentation of restart_stanza
     # https://www.nomadproject.io/docs/job-specification/restart.html
     restart {

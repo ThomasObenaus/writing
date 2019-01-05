@@ -4,6 +4,8 @@ job "fail-service" {
   type = "service"
 
   group "fail-service" {
+    count = 3
+
     task "fail-service" {
       driver = "docker"
       config {

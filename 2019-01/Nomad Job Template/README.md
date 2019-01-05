@@ -1,4 +1,17 @@
-# Nomad Job Template
+# A good Nomad Job Template
+
+A Container Orchestration System (COS) adds application life cycle management, scheduling and placement based on available resources and connectivity features to your cloud system. It takes away the responsibility from you to take care for these tasks. Thus it is possible instead of implementing the mentioned features in each of your services to reduce the complexity in the components you have to develop.
+Developing a cloud system the first goal is to satisfy your customers. Beside good quality of content, a responsive UI and a appealing design of the application the main goal is to have a resilient, fault tolerant and stable system. You want to get as close as possible to the 0-downtime label.
+
+To get this, again, you can implement the needed parts in each of your components or you can take advantage of the qualities offered by the COS.
+[Nomad](https://www.nomadproject.io) in particular covers three scenarios which would lead to potential downtime.
+These are issues that can be mitigated or even solved using nomad:
+
+1. Dead Service - An already deployed and running version of the service gets unresponsive or unhealthy over time.
+2. Dead Node - On a nomad client node something is completely broken. For example the docker daemon does not work any more.
+3. Faulty Service Version - The latest commit introduces a bug that leads to instability of the service.
+
+In this post I want to present and discuss a nomad job definition that can be used as default template for most applications.
 
 ## Intro of Fail-Service
 
