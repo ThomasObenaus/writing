@@ -61,16 +61,16 @@ job "fail-service" {
       # Documentation for service stanza:
       # https://www.nomadproject.io/docs/job-specification/service.html
       service {
-        name = "${TASK}"  # Specifies the name this service will be advertised as in Consul
-        port = "http"     # Specifies the port to advertise for this service
+        name = "${TASK}"
+        port = "http"
         check {
-          name     = "fail_service health using http endpoint '/health'"  # Name of the health check
-          port     = "http"                                               # Specifies the label of the port on which the check will be performed.
-          type     = "http"                                               # This indicates the check types supported by Nomad. Valid options are grpc, http, script, and tcp.
-          path     = "/health"                                            # Specifies the path of the HTTP endpoint which Consul will query to query the health of a service.
-          method   = "GET"                                                # Method used for http checks
-          interval = "10s"                                                # Specifies the frequency of the health checks that Consul will perform.
-          timeout  = "2s"                                                 # Specifies how long Consul will wait for a health check query to succeed.
+          name     = "fail_service health using http endpoint '/health'"
+          port     = "http"
+          type     = "http"
+          path     = "/health"
+          method   = "GET"
+          interval = "10s"
+          timeout  = "2s"
         }
       }
 
@@ -86,6 +86,14 @@ job "fail-service" {
   }
 }
 ```
+
+While evolving the job file incrementally I'll just add the part that has changed regarding the previous one to keep the text in check. For each new configuration part the link to the official documentation is added inline.
+In order to monitor the state of the service, nomad has to know how to obtain this information. This is specified in the `job > group > task > service > check{...}` section. There nomad shall call each 10s the `/health` endpoint of the service using the HTTP protocol and should treat the state as healthy if the service has responded within 2s.
+
+## Platform for Testing
+
+For being able to actually deploy the nomad job file that is developed here, a COS as described at [How a Container Orchestration System Could Look Like](https://medium.com/@obenaus.thomas/how-a-production-ready-container-orchestration-system-could-look-like-6f92b81a3319) is needed. You either can set one up in an AWS account, following the tutorial [How to Set Up a Container Orchestration System](https://medium.com/@obenaus.thomas/how-to-set-up-a-container-orchestration-system-cos-c5805790f0c1) or you can make use of nomads dev-mode.
+How to use the dev-mode is described at [COS Project, devmode](https://github.com/MatthiasScholz/cos/tree/f/script_for_devmode/examples/devmode). There you simply have to call the provided script `./devmode <host-ip-addr> public-services`. This spins up a consul and a nomad instance and provides a nomad job file for fabio deployment.
 
 # Backlog
 
