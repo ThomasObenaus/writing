@@ -20,6 +20,7 @@ job "fail-service" {
       service {
         name = "${TASK}"  # Specifies the name this service will be advertised as in Consul
         port = "http"     # Specifies the port to advertise for this service
+        tags = ["urlprefix-/fail-service"] # fabio
         check {
           name     = "fail_service health using http endpoint '/health'"  # Name of the health check
           port     = "http"                                               # Specifies the label of the port on which the check will be performed.
