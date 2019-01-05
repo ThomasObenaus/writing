@@ -9,7 +9,7 @@ job "fail-service" {
     task "fail-service" {
       driver = "docker"
       config {
-        image = "thobe/fail_service:v0.0.11"
+        image = "thobe/fail_service:v0.0.12"
         port_map = {
           http = 8080
         }
