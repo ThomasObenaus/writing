@@ -63,6 +63,7 @@ job "fail-service" {
       service {
         name = "${TASK}"
         port = "http"
+        tags = ["urlprefix-/fail-service strip=/fail-service"] # fabio
         check {
           name     = "fail_service health using http endpoint '/health'"
           port     = "http"
@@ -72,6 +73,10 @@ job "fail-service" {
           interval = "10s"
           timeout  = "2s"
         }
+      }
+
+      env {
+        HEALTHY_FOR    = -1, # Stays healthy forever
       }
 
       resources {
@@ -89,18 +94,17 @@ job "fail-service" {
 
 While evolving the job file incrementally I'll just add the part that has changed regarding the previous one to keep the text in check. For each new configuration part the link to the official documentation is added inline.
 In order to monitor the state of the service, nomad has to know how to obtain this information. This is specified in the `job > group > task > service > check{...}` section. There nomad shall call each 10s the `/health` endpoint of the service using the HTTP protocol and should treat the state as healthy if the service has responded within 2s.
+The environment variable `HEALTHY_FOR` defined in `job > group > task > service > env {...}` is set to -1, which tells the fail-service to stay healthy forever.
+With `tags = ["urlprefix-/fail-service strip=/fail-service"] # fabio` we specified that fabio shall route all requests that hit `/fail-service/*` shall be routed to the fail-service and that `/fail-service` shall be removed from the path. This is needed to ensure that the request hits the fail-service with `/health` and not with `/fail-service/health`, which the service does not implement.
 
 ## Platform for Testing
 
 For being able to actually deploy the nomad job file that is developed here, a COS as described at [How a Container Orchestration System Could Look Like](https://medium.com/@obenaus.thomas/how-a-production-ready-container-orchestration-system-could-look-like-6f92b81a3319) is needed. You either can set one up in an AWS account, following the tutorial [How to Set Up a Container Orchestration System](https://medium.com/@obenaus.thomas/how-to-set-up-a-container-orchestration-system-cos-c5805790f0c1) or you can make use of nomads dev-mode.
 How to use the dev-mode is described at [COS Project, devmode](https://github.com/MatthiasScholz/cos/tree/f/script_for_devmode/examples/devmode). There you simply have to call the provided script `./devmode <host-ip-addr> public-services`. This spins up a consul and a nomad instance and provides a nomad job file for fabio deployment.
 
-# Backlog
+Now we simply can deploy the first version by running `nomad run minimal.nomad`. Then with `watch -x curl http://\<cluster-address\>:9999/fail-service/health` you get back constantly a `200_OK` and `{"message":"Ok","ok":true}`.
 
-1. minimal job file
-   - curl over fabio is possible
-
-## Resilience
+## Adding Resilience
 
 1. minimal unhealthy job file
    - curl over fabio is NOT possible
