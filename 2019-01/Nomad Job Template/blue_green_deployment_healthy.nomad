@@ -42,7 +42,7 @@ job "fail-service" {
       service {
         name = "${TASK}"
         port = "http"
-        tags = ["urlprefix-/fail-service"] # fabio
+        tags = ["urlprefix-/fail-service strip=/fail-service"] # fabio
         check {
           name     = "fail_service health using http endpoint '/health'"
           port     = "http"

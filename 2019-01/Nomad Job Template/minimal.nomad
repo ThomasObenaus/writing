@@ -20,7 +20,7 @@ job "fail-service" {
       service {
         name = "${TASK}"  # Specifies the name this service will be advertised as in Consul
         port = "http"     # Specifies the port to advertise for this service
-        tags = ["urlprefix-/fail-service"] # fabio
+        tags = ["urlprefix-/fail-service strip=/fail-service"] # fabio
         check {
           name     = "fail_service health using http endpoint '/health'"  # Name of the health check
           port     = "http"                                               # Specifies the label of the port on which the check will be performed.
@@ -30,6 +30,10 @@ job "fail-service" {
           interval = "10s"                                                # Specifies the frequency of the health checks that Consul will perform. 
           timeout  = "2s"                                                 # Specifies how long Consul will wait for a health check query to succeed.
         }
+      }
+
+      env {
+        HEALTHY_FOR    = -1, # Stays healthy forever
       }
 
       resources {
