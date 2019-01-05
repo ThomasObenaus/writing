@@ -1,6 +1,6 @@
 # A good Nomad Job Template
 
-A Container Orchestration System (COS) adds application life cycle management, scheduling and placement based on available resources and connectivity features to your cloud system. It takes away the responsibility from you to take care for these tasks. Thus it is possible instead of implementing the mentioned features in each of your services to reduce the complexity in the components you have to develop.
+A Container Orchestration System (COS) adds application life cycle management, scheduling and placement based on available resources and connectivity features to your cloud system. It takes away the responsibility from you to take care for these tasks. Thus it is possible, instead of implementing the mentioned features in each of your services, to reduce the complexity in the components you have to develop.
 Developing a cloud system the first goal is to satisfy your customers. Beside good quality of content, a responsive UI and a appealing design of the application the main goal is to have a resilient, fault tolerant and stable system. You want to get as close as possible to the 0-downtime label.
 
 To get this, again, you can implement the needed parts in each of your components or you can take advantage of the qualities offered by the COS.
@@ -11,9 +11,34 @@ These are issues that can be mitigated or even solved using nomad:
 2. Dead Node - On a nomad client node something is completely broken. For example the docker daemon does not work any more.
 3. Faulty Service Version - The latest commit introduces a bug that leads to instability of the service.
 
-In this post I want to present and discuss a nomad job definition that can be used as default template for most applications.
+Of course, those three situations can be solved by an operator, who just restarts the service (1), moves the service to a healthy node (2) and rolls back the service to a previously deployed version (3). But as we all know machines are better in doing repetitive tasks and are less error prone there. So lets make use of the features of the machine called nomad and automate this kind of self healing.
 
-## Intro of Fail-Service
+**In this post I want to present and discuss a nomad job definition that can be used as default template for most applications**. Of course there are parameters that have to be adjusted to your needs, but I want to line out what could be a good starting point in order to get a resilient application as described before.
+
+## The Fail-Service
+
+To test the resiliency features of nomad and develop the nomad job template incrementally a service whose stability can be influenced is needed. For this purpose I make use of the [Fail-Service](https://github.com/ThomasObenaus/dummy-services/tree/master/fail_service).
+
+The fail-service is a small golang based service for testing purposes. The only feature it offers is getting healthy or unhealthy. The provided `/health` endpoint can be used to check the state. It reports 200_OK if the service is healthy or 504_GatewayTimeout otherwise.
+
+The service state can be influenced via command line parameters or by sending a request to the `/sethealthy` or `/setunhealthy` endpoint.
+Here are some examples:
+
+```bash
+# Service will stay healthy forever
+./fail_service -healthy-for=-1
+
+# Gets healthy in 10s, then after 20s it gets unhealthy. For 3s it stays unhealthy
+# and gets healthy again to stay so for 20s. etc.
+./fail_service -healthy-in=10 -healthy-for=20 -unhealthy-for=3
+
+# Gets healthy in 10s, then after 20s it gets unhealthy and then stays unhealthy forever.
+./fail_service -healthy-in=10 -healthy-for=20 -unhealthy-for=-1
+```
+
+To get the service it can be easily be build running `make build` and even better it can be pulled from Docker Hub via `docker pull thobe/fail_service:latest`. This makes it easy for us to use it directly in a nomad job file.
+
+# Backlog
 
 1. minimal job file
    - curl over fabio is possible
@@ -79,6 +104,7 @@ specify interval = "10m" # Carefully if it is too small the unhealthy service wi
 - to fix you have to call nomad job stop fail-service
 - and then nomad run fail-service.nomad
   --> create bug on nomad
+  --> no auto revert supported for already deployed versions, can be checked by running the get_unhealthy.nomad
 
 ## Deployments
 
@@ -98,4 +124,6 @@ specify interval = "10m" # Carefully if it is too small the unhealthy service wi
 
 ## Migration
 
-(optional)
+## Template as VSC, atom and emacs code snippet
+
+- suggestion, please leave comments, ...
