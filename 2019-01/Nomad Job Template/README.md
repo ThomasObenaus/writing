@@ -353,3 +353,10 @@ These are:
 2. `{{list_of_datacenters}}` ... The nomad data centers the service shall be deployed to. This is a comma separated list of strings, i.e. `"public-services","backoffice"`.
 3. `{{docker_image}}` ... The full name of the docker image that shall be pulled, including repository name and version. I.e. `thobe/fail_service:v0.0.12`.
 4. `{{exposed_port_for_health_check}}` ... The port that is exposed by the service over which the `/health` endpoint can be reached. I.e. `8080`.
+
+For easy handling in your preferred editor, you can use the according snippets:
+
+1. Visual Studio Code
+2. Atom
+3. Sublime
+4. Emacs

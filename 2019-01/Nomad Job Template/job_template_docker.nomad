@@ -4,9 +4,9 @@ job "{{service_name}}" {
   type = "service"
 
   reschedule {
-    delay = "30s"
+    delay          = "30s"
     delay_function = "constant"
-    unlimited = true
+    unlimited      = true
   }
 
   update {
@@ -32,6 +32,7 @@ job "{{service_name}}" {
 
     task "{{service_name}}" {
       driver = "docker"
+
       config {
         image = "{{docker_image}}"
         port_map = {
@@ -43,6 +44,7 @@ job "{{service_name}}" {
         name = "{{service_name}}"
         port = "http"
         tags = ["urlprefix-/{{service_name}} strip=/{{service_name}}"] # fabio
+
         check {
           name     = "{{service_name}} health using http endpoint '/health'"
           port     = "http"
