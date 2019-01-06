@@ -205,21 +205,59 @@ The adjusted nomad job file [reschedule_unhealthy.nomad](https://gist.github.com
 
 With this deployment you can observe that nomad reschedules the failed allocation continuously as depicted in the graphic above. If a allocation finally failed after restarting the task three times, nomad reschedules the job. Thus after 2 minutes (`delay = "2m"`) a new allocation is created and started. This rescheduling will be done forever (`unlimited = true`), while keeping the time the job is in pending state fixed at 2m (`delay_function = "constant"`).
 
-## Stable/ 0-Downtime Deployments
+## No Deployment of faulty Versions
 
-### Rolling
+With the points discussed so far, we have a job file that makes use of the nomad features to cope with the points 1 (Unresponsive Service), 2 (Dead Service) and 3 (Dead Node). As indicated, nomad is also able to help with the problem of deploying a faulty version (point 4).
 
-- auto_revert
-- screenshot last stable
+Nomad provides standard deployment patterns like rolling update, canary- and blue/ green deployment. Again, for this topic as well, hashicorp has written the nice blog post [Job Lifecycle](https://www.hashicorp.com/blog/building-resilient-infrastructure-with-nomad-job-lifecycle) explaining how deployment of nomad jobs can be configured.
 
-## Canary
+This post is about defining a good default nomad job file. That's why, I'll just focus on the rolling update as the default pattern. The remaining ones need manual operation, i.e. a canary has to be promoted manually when testing was successful.
 
-- nomad deployment promote <deployment id>
-- nomad deployment promote 6bd89b2d
+The type of deployment is specified with the [update stanza](https://www.nomadproject.io/docs/job-specification/update.html). Per default no deployment pattern is used. Thus we extend the job file by:
 
-## Blue Green
+```bash
+job "fail-service" {
+  [..]
+  update {
+    max_parallel      = 1
+    health_check      = "checks"
+    min_healthy_time  = "10s"
+    healthy_deadline  = "5m"
+    progress_deadline = "10m"
+    auto_revert       = true
+    canary            = 0
+    stagger           = "30s"
+  }
+  [..]
+```
 
-- canaray == count
+Furthermore we adjust the job file to deploy three healthy instances of the fail-service to see show how a successful deployment looks like.
+
+1. Change `count = 1` to `count = 3`.
+2. Replace the current `env` section by `env { HEALTHY_FOR = -1 }`.
+3. Save it as [rolling_deployment.nomad](https://gist.github.com/ThomasObenaus/3c0496534271392cf155b9d4a5a33af4).
+
+By calling `nomad run rolling_deployment.nomad` a job with a successful rolling update can be observed at nomad.
+
+![SuccessfulRollingUpdate](SuccessfulRollingUpdate.png)
+
+Successfully deployed versions are marked as "stable" on nomad side. Only versions that were deployed by using the update stanza will be potentially marked as stable by nomad.
+
+![StableDeployment](StableDeployment.png)
+
+Now after having deployed a working version, we want to see how nomad behaves if a faulty or constantly unhealthy version is deployed using a rolling update. Therefore the job-file has to be adjusted a bit again.
+By replacing `env { HEALTHY_FOR = -1 }` with `env { HEALTHY_IN = -1 }` we get [rolling_deployment_unhealthy.nomad](https://gist.github.com/ThomasObenaus/a6405aef948bd26fa716094dc8825125). Which can be deployed with `nomad run rolling_deployment_unhealthy.nomad`.
+
+With the update stanza in the job file we defined a rolling update. Here nomad replaces one (`max_parallel = 1`) of the currently running version by a new one.
+If an instance of the new version is healthy for at least 10s (`min_healthy_time = "10s"`) nomad will take down the next old version and tries to update it. But in our case even the first instance of the new version never gets healthy. Thus nomad follows the rules that are defined in the job file for restarting and rescheduling to get the new version up. Since we have defined an unlimited amount of rescheduling retries the deployment would take forever. To avoid this two parameters have to be considered.
+The `healthy_deadline = "5m"` specifies how much time an allocation has to get healthy at max before being rescheduled. If the new version does not get healthy in within 5m the allocation will be marked as unhealthy and the rescheduling will be started. Even if there are other numbers defined in the `check` and `restart` stanza, that would have specified more time for the allocation to get healthy before being rescheduled. Furthermore even if the `healthy_deadline` has been exceeded the deployment still goes on.
+The parameter `progress_deadline = "10m"` defines the time a deployment can take at maximum before being marked as failed if not all allocations get healthy in this span.
+
+![FailedRollingDeplyoment](FailedRollingDeployment.png)
+
+As you can see in the image above the deployment failed because the deployed version could not get healthy within the `progress_deadline`. Even if nomad was able to place and try four allocations within this time span.
+
+Finally the parameter `auto_revert = true` introduces nomad to roll back and to deploy the latest version that was marked as stable.
 
 ## Migration
 

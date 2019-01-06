@@ -63,7 +63,7 @@ job "fail-service" {
       }
 
       env {
-        HEALTHY_IN    = 0,
+        HEALTHY_FOR    = -1,
       }
 
       resources {

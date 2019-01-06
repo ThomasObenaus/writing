@@ -9,15 +9,17 @@ job "fail-service" {
     unlimited = true
   }
 
+  # Documentation update_stanza
+  # https://www.nomadproject.io/docs/job-specification/update.html
   update {
-    max_parallel      = 1
-    health_check      = "checks"
-    min_healthy_time  = "10s"
-    healthy_deadline  = "5m"
-    progress_deadline = "10m"
-    auto_revert       = true
-    canary            = 0
-    stagger           = "30s"
+    max_parallel      = 1         # Number of allocations within a task group that can be updated at the same time
+    health_check      = "checks"  # Allocation should be considered healthy when all of its tasks are running and their associated checks are healthy.
+    min_healthy_time  = "10s"     # Minimum time the allocation must be in the healthy state before it is marked as healthy and unblocks further allocations from being updated. 
+    healthy_deadline  = "5m"      # Specifies the deadline in which the allocation must be marked as healthy. Stops deployment of allocation if deadline is exceeded.
+    progress_deadline = "10m"     # Specifies the deadline in which an allocation must be marked as healthy. Stops the deployment if deadline is exceeded.
+    auto_revert       = true      # Specifies if the job should auto-revert to the last stable job on deployment failure.
+    canary            = 0         # Specifies that changes to the job that would result in destructive updates should create the specified number of canaries without stopping any previous allocations.
+    stagger           = "30s"     # Specifies the delay between migrating allocations off nodes marked for draining.
   }
 
   group "fail-service" {
