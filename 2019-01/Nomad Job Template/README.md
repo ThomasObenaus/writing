@@ -355,8 +355,8 @@ These are:
 4. `{{exposed_port_for_health_check}}` ... The port that is exposed by the service over which the `/health` endpoint can be reached. I.e. `8080`.
 
 For easy handling in your preferred editor, you can use the according snippets:
+_The snippets are only activated/ available if you are in hcl mode. Therefore you have to install the according pugin to support the hcl (hashicorp configuration language) for your editor._
 
-1. Visual Studio Code
-2. Atom
-3. Sublime
-4. Emacs
+1. Visual Studio Code: [global code snippet](https://gist.github.com/ThomasObenaus/655607103fd7932d6572b4972aa4cc78) or [language specific](https://gist.github.com/ThomasObenaus/0924f17a947f9b1252aa27dccf21d67b.).
+2. Atom: [snippet_atom.cson](https://gist.github.com/ThomasObenaus/e79e56814d90b755123a9194272f8131).
+3. Sublime: [nomad.sublime.snippet](https://gist.github.com/ThomasObenaus/dedff3284de671667cd7f3c9cf9e3cea).
