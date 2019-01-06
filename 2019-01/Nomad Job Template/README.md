@@ -1,4 +1,4 @@
-# A good Nomad Job Template
+# A Good, Default Nomad Job Template
 
 A Container Orchestration System (COS) adds application life cycle management, scheduling and placement based on available resources and connectivity features to your cloud system. It takes away the responsibility from you to take care for these tasks. Thus it is possible, instead of implementing the mentioned features in each of your services, to reduce the complexity in the components you have to develop.
 Developing a cloud system the first goal is to satisfy your customers. Beside good quality of content, a responsive UI and a appealing design of the application the main goal is to have a resilient, fault tolerant and stable system. You want to get as close as possible to the 0-downtime label.
@@ -345,7 +345,7 @@ The template contains the discussed features:
 - Rescheduling jobs to healthy nodes.
 - Rolling deployment to avoid running faulty versions in production.
 
-To fill it one has to specify the variable parts, which are defined using the [golang template notation](https://golang.org/pkg/text/template/).
+To fill it, one has to specify the variable parts, which are defined using the [golang template notation](https://golang.org/pkg/text/template/).
 
 These are:
 
@@ -360,3 +360,11 @@ _The snippets are only activated/ available if you are in hcl mode. Therefore yo
 1. Visual Studio Code: [global code snippet](https://gist.github.com/ThomasObenaus/655607103fd7932d6572b4972aa4cc78) or [language specific](https://gist.github.com/ThomasObenaus/0924f17a947f9b1252aa27dccf21d67b.).
 2. Atom: [snippet_atom.cson](https://gist.github.com/ThomasObenaus/e79e56814d90b755123a9194272f8131).
 3. Sublime: [nomad.sublime.snippet](https://gist.github.com/ThomasObenaus/dedff3284de671667cd7f3c9cf9e3cea).
+
+## Summary
+
+In this post I explained how nomad can help to get a fault tolerant and resilent cloud system. I showed how the specific features like restarting, rescheduling and deployment patterns can be activated. Therefore all relevant nomad stanzas where discussed and showcased using a simple golang based service.
+
+As a result I presented a template that can be used as a good, default nomad job definition.
+
+Please give me feedback. Maybe you prefer different values for timeouts, intervals or even another deployment pattern. What are your thoughts about the template?
