@@ -161,6 +161,45 @@ job "fail-service" {
       [..]
 ```
 
+With this deployment you can observe that nomad kills the unresponsive fail-service (task) and restarts the allocation several times.
+
+![TaskStates](task_states.png)
+
+This behavior is shown schematically in the image above:
+
+1. The initial health-check is done after waiting for 10s. Specified by `check_restart { grace = "10s" }`.
+2. The following health-checks are done each 10s. Specified by `check { interval = "10s" }`.
+3. Nomad kills the task after 3 consecutively failed health-checks and treats it as dead. Specified by `check_restart { limit = 3 }`.
+4. Then nomad restarts the dead task after a delay of 15s. Specified by `restart { delay = "15s" }`.
+5. Nomad won't restart the task a third time if it already failed two consecutive times in 10 minutes. And treats the allocation as failed Specified by
+
+   ```bash
+   restart {
+     attempts = 2
+     interval = "10m"
+   }
+   ```
+
+### Reschedule failing Jobs
+
+With this extended nomad job file we have now a system that can heal a service that fails or gets unresponsive sometimes. But what if there is a systematic or persistent problem? For example it could be that the docker daemon on a specific node is just broken. Here nomad per default tries to reschedule failing jobs on nodes that are healthy (regarding the driver state) and prefers nodes the job did not run beforehand.
+To specify the rescheduling behavior explicitly we extend the nomad job file by adding the [rescheduling stanza](https://www.nomadproject.io/docs/job-specification/reschedule.html).
+
+```bash
+job "fail-service" {
+  [..]
+  reschedule {
+    delay = "30s"
+    delay_function = "constant"
+    unlimited = true
+  }
+  [..]
+```
+
+The parameter `delay` specifies the duration to wait before rescheduling. `delay_function` defines the function used to calculate the next value of the `delay`parameter. Here I prefer to use the `constant` function as default, since it gives more control compared to `exponential` or `fibonacci`.
+Finally the parameter `unlimited = true` tells nomad to repeat the rescheduling forever. I recommend this over setting `unlimited`to `false` since with this setting the job would end up in state `dead`. If this state is reached manual effort is needed to get the job back up working again. A simple redeployment is not enough - which is a bug in nomad I think.
+The adjusted nomad job file can be deployed via `nomad run reschedule_unhealthy.nomad`.
+
 # BACKLOG
 
 1. minimal unhealthy job file

@@ -12,7 +12,7 @@ job "fail-service" {
   }
 
   group "fail-service" {
-    count = 3
+    count = 1
 
     restart {
       interval = "10m"  
