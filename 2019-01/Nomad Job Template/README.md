@@ -39,7 +39,7 @@ Here are some examples:
 
 To get the service it can be easily be build running `make build` and even better it can be pulled from Docker Hub via `docker pull thobe/fail_service:latest`. This makes it easy for us to use it directly in a nomad job file.
 
-Which leads us to our first minimal nomad job file definition `minimal.nomad`.
+Which leads us to our first minimal nomad job file definition [minimal.nomad](https://gist.github.com/ThomasObenaus/3e46a53a9bfaabb0fad268e9900ab125).
 
 ```bash
 job "fail-service" {
@@ -122,7 +122,7 @@ env {
 }
 ```
 
-in the first job file and save it as `minimal_unhealthy.nomad`. With the deployment of this new version (`nomad run minimal_unhealthy.nomad`) you can see how the curl call stops returning messages. The reason for this is that fabio won't route any traffic to services that are unhealthy in the consul service catalog. This bad situation now will last forever since no one is here to stop or restart the faulty service.
+in the first job file and save it as [minimal_unhealthy.nomad](https://gist.github.com/ThomasObenaus/d126921005691e9a79201e225fdc6bf1). With the deployment of this new version (`nomad run minimal_unhealthy.nomad`) you can see how the curl call stops returning messages. The reason for this is that fabio won't route any traffic to services that are unhealthy in the consul service catalog. This bad situation now will last forever since no one is here to stop or restart the faulty service.
 Here nomad offers restart and rescheduling features. [Building Resilient Infrastructure with Nomad: Restarting tasks](https://www.hashicorp.com/blog/resilient-infrastructure-with-nomad-restarting-tasks) gives a nice explanation how failed or unresponsive jobs can be automatically restarted or even rescheduled on other nodes.
 
 ### Restart failed/ unresponsive Jobs
@@ -130,7 +130,7 @@ Here nomad offers restart and rescheduling features. [Building Resilient Infrast
 With the `job > group > task > service > check{...}` section, as part of the [service stanza](https://www.nomadproject.io/docs/job-specification/service.html)), nomad already knows how check the service health state. By adding the [check_restart stanza](https://www.nomadproject.io/docs/job-specification/check_restart.html) to the service definition, nomad knows when to kill a unresponsive service - how many failed health checks are enough to treat a service as unresponsive and "ready to be killed".
 Then with the addition of the [restart stanza](https://www.nomadproject.io/docs/job-specification/restart.html) to the group definition you can control when and how nomad shall restart a killed service. This restart policy applies to services killed by nomad due to be unresponsive or exceeding memory limits and to those who just crashed.
 
-The adjusted nomad job file `check_restart_unhealthy.nomad` now looks like and can be deployed via `nomad run check_restart_unhealthy.nomad`.
+The adjusted nomad job file [check_restart_unhealthy.nomad](https://gist.github.com/ThomasObenaus/9807504567b12411aa529d409c686883) now looks like and can be deployed via `nomad run check_restart_unhealthy.nomad`.
 
 ```bash
 job "fail-service" {
@@ -189,7 +189,7 @@ To specify the rescheduling behavior explicitly we extend the nomad job file by 
 job "fail-service" {
   [..]
   reschedule {
-    delay = "30s"
+    delay = "2m"
     delay_function = "constant"
     unlimited = true
   }
@@ -197,73 +197,15 @@ job "fail-service" {
 ```
 
 The parameter `delay` specifies the duration to wait before rescheduling. `delay_function` defines the function used to calculate the next value of the `delay`parameter. Here I prefer to use the `constant` function as default, since it gives more control compared to `exponential` or `fibonacci`.
-Finally the parameter `unlimited = true` tells nomad to repeat the rescheduling forever. I recommend this over setting `unlimited`to `false` since with this setting the job would end up in state `dead`. If this state is reached manual effort is needed to get the job back up working again. A simple redeployment is not enough - which is a bug in nomad I think.
-The adjusted nomad job file can be deployed via `nomad run reschedule_unhealthy.nomad`.
+Finally the parameter `unlimited = true` tells nomad to repeat the rescheduling forever. I recommend this over setting `unlimited`to `false` since with this setting the job would end up in state `dead`. If this state is reached manual effort is needed (call `nomad job stop fail-service`) to get the job back up working again. A simple redeployment is not enough - which is a bug in nomad I think. Furthermore an automatic revert to a previously working version is only supported during deployments not for already running versions that get mad after time.
 
-# BACKLOG
+The adjusted nomad job file [reschedule_unhealthy.nomad](https://gist.github.com/ThomasObenaus/4b645b3e7fd1a485b0b7c88dbf4e3db6) can be deployed via `nomad run reschedule_unhealthy.nomad`.
 
-1. minimal unhealthy job file
-   - curl over fabio is NOT possible
-   - will stay forever
-   - gets unhealthy in consul
-   - no automatic cleanup/ restart by nomad
-2. Restarting unresponsive tasks: check_restart_unhealthy.nomad
-   - show restart and migration life-cycle
-   - explain potential reasons
-   - explain check_restart stanza
-   - describe the example (use the mysql example at https://www.nomadproject.io/docs/job-specification/check_restart.html)
+![JobStates](job_states.png)
 
-#### Default behaviour without specifiying the restart_stanza
+With this deployment you can observe that nomad reschedules the failed allocation continuously as depicted in the graphic above. If a allocation finally failed after restarting the task three times, nomad reschedules the job. Thus after 2 minutes (`delay = "2m"`) a new allocation is created and started. This rescheduling will be done forever (`unlimited = true`), while keeping the time the job is in pending state fixed at 2m (`delay_function = "constant"`).
 
-- describe restart_policy/ stanza
-
-```bash
-restart {
-  interval = "1m"
-  attempts = 2
-  delay    = "15s"
-  mode     = "fail"
-}
-```
-
-- checks after 5s, then after 10s and again after 10s (intervall 10s, grace 5s, limit 3)
-- then it gets killed
-- then it gets restarted after 15s (delay 15s)
-- this procedure is repeated 2 times
-- then the service is considered as to be dead
-
-```bash
-01/04/19 16:07:34	Not Restarting	Exceeded allowed attempts 2 in interval 30m0s and mode is "fail"
-01/04/19 16:07:30	Killed	Task successfully killed
-01/04/19 16:07:29	Killing	Sent interrupt. Waiting 5s before force killing
-01/04/19 16:07:29	Restart Signaled	healthcheck: check "fail_service health using http endpoint '/health'" unhealthy
-01/04/19 16:07:03	Started	Task started by client
-
-01/04/19 16:06:47	Restarting	Task restarting in 15.732809158s
-01/04/19 16:06:43	Killed	Task successfully killed
-01/04/19 16:06:43	Killing	Sent interrupt. Waiting 5s before force killing
-01/04/19 16:06:43	Restart Signaled	healthcheck: check "fail_service health using http endpoint '/health'" unhealthy
-01/04/19 16:06:17	Started	Task started by client
-
-01/04/19 16:06:01	Restarting	Task restarting in 15.42486862s
-01/04/19 16:05:57	Killed	Task successfully killed
-01/04/19 16:05:56	Killing	Sent interrupt. Waiting 5s before force killing
-01/04/19 16:05:56	Restart Signaled	healthcheck: check "fail_service health using http endpoint '/health'" unhealthy
-01/04/19 16:05:30	Started	Task started by client
-```
-
-specify interval = "10m" # Carefully if it is too small the unhealthy service will be restared forever
-
-4. Reschedule
-
-- should avoid unlimited=false and attempts=x
-- will leave job in failed state forever even a redeployment is not possible
-- to fix you have to call nomad job stop fail-service
-- and then nomad run fail-service.nomad
-  --> create bug on nomad
-  --> no auto revert supported for already deployed versions, can be checked by running the get_unhealthy.nomad
-
-## Deployments
+## Stable/ 0-Downtime Deployments
 
 ### Rolling
 
