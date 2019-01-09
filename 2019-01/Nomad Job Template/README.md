@@ -1,11 +1,10 @@
 # A Good, Default Nomad Job Template
 
 A Container Orchestration System (COS) adds application life cycle management, scheduling and placement based on available resources and connectivity features to your cloud system. It takes away the responsibility from you to take care for these tasks. Thus it is possible, instead of implementing the mentioned features in each of your services, to reduce the complexity in the components you have to develop.
-When developing a cloud system, the first goal is to satisfy your customers. Beside good quality of content, a responsive UI and an appealing design of the application, the main goal is to have a resilient, fault tolerant and stable system. You want to get as close as possible to the 0-downtime mark.
+When developing a web application, the first goal is to satisfy your customers. Beside good quality of content, a responsive UI and an appealing design of the application, the main goal is to have a resilient, fault tolerant and stable system. You want to get as close as possible to the 0-downtime mark.
 
 To get this, again, you can implement the needed parts in each of your components or you can take advantage of the qualities offered by the COS.
-[Nomad](https://www.nomadproject.io) in particular covers three scenarios which would lead to potential downtime.
-The following issues can be mitigated or even solved using nomad:
+[Nomad](https://www.nomadproject.io) in particular covers three scenarios which would lead to potential downtime. The following issues can be mitigated or even solved using nomad:
 
 1. Unresponsive Service - An already deployed and running version of the service gets unresponsive or unhealthy over time.
 2. Dead Service - An already deployed and running version just crashes, probably due to OOM.
@@ -90,7 +89,7 @@ job "fail-service" {
   }
 }
 ```
-
+This minimal.nomad job file is the starting point. Throughout the article it will be enhanced by adding the objectives mentioned in the introduction step by step. First the definition for restarting of unresponsive or dead jobs is added. Then job file is extended by the configuration for rescheduling a job to a healthy nomad client node. And finally, to avoid the roll out of a faulty service version, the specification is being enhanced further by adding the specification of a deployment pattern.
 While evolving the job file incrementally I'll just add the part that has changed regarding the previous one to keep the text in check.
 In order to monitor the state of the service, nomad has to know how to obtain this information. This is specified in the `job > group > task > service > check{...}` section. According to the current definition, nomad shall call each 10s the `/health` endpoint of the service using the HTTP protocol and should treat the state as healthy if the service has responded within 2s.
 The environment variable `HEALTHY_FOR` defined in `job > group > task > service > env {...}` is set to -1, which tells the fail-service to stay healthy forever.
