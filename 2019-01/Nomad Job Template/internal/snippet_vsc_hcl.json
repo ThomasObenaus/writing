@@ -56,7 +56,7 @@
         "      service {",
         "        name = \"${1:service-name}\"",
         "        port = \"http\"",
-        "        tags = [\"urlprefix-/${1:service-name} strip=/${1:service-name}\" \"${1:service-name}\", \"enable-metrics\", \"stack=service.${4:stack}\", \"metrics-path=/metrics\"]] ",
+        "        tags = [\"urlprefix-/${1:service-name} strip=/${1:service-name}\", \"${1:service-name}\", \"enable-metrics\", \"stack=service.${4:stack}\", \"metrics-path=/metrics\"]] ",
         "",
         "        check {",
         "          name     = \"${1:service-name} health using http endpoint '/health'\"",

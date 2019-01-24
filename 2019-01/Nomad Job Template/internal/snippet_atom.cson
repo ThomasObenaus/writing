@@ -44,9 +44,17 @@
             driver = \"docker\"
 
             config {
-              image = \"${4:reponame}:latest\"
+              image = "{{ecr_url}}/service/${4:stack}/${1:service-name}:{{version}}"
               port_map = {
                 http = ${5:8080}
+              }
+
+              logging {
+                type = \"fluentd\"
+                config {
+                  fluentd-address = \"\${attr.unique.network.ip-address}:8002\"
+                  tag = \"${6:service.go}.${4:stack}.${1:service-name}\""
+                }
               }
             }
 
@@ -57,7 +65,7 @@
             service {
               name = \"${1:service-name}\"
               port = \"http\"
-              tags = [\"urlprefix-/${1:service-name} strip=/${1:service-name}\"] # fabio
+              tags = [\"urlprefix-/${1:service-name} strip=/${1:service-name}\", \"${1:service-name}\", "enable-metrics", "stack=service.${4:stack}", "metrics-path=/metrics"]] 
 
               check {
                 name     = \"${1:service-name} health using http endpoint '/health'\"
