@@ -5,8 +5,8 @@
 # --
 
 # https://www.nomadproject.io/docs/job-specification/job.html
-job "${1:service-name}" {
-  datacenters = [${2:"public-services"}]
+job "$1" {
+  datacenters = ["${2:public-services}"]
   type = "service"
   
   # https://www.nomadproject.io/docs/job-specification/reschedule.html
@@ -29,7 +29,7 @@ job "${1:service-name}" {
   }
 
   # https://www.nomadproject.io/docs/job-specification/group.html
-  group "${1:service-name}" {
+  group "$1" {
     count = ${3:1}
 
     # https://www.nomadproject.io/docs/job-specification/restart.html
@@ -41,10 +41,10 @@ job "${1:service-name}" {
     }
 
     # https://www.nomadproject.io/docs/job-specification/task.html
-    task "${1:service-name}" {
+    task "$1" {
       driver = "docker"
       config {
-        image = "{{ecr_url}}/service/${4:stack}/${1:service-name}:{{version}}"
+        image = "{{ecr_url}}/service/$4/$1:{{version}}"
         port_map = {
           http = ${5:8080}
         }
@@ -52,8 +52,8 @@ job "${1:service-name}" {
         logging {
           type = "fluentd"
           config {
-            fluentd-address = "${attr.unique.network.ip-address}:8002"
-            tag = "${6:service.go}.${4:stack}.${1:service-name}"
+            fluentd-address = "\$\{attr.unique.network.ip-address\}:8002"
+            tag = "${6:service.go}.$4.$1"
           }
         }
       }
@@ -63,12 +63,12 @@ job "${1:service-name}" {
 
       # https://www.nomadproject.io/docs/job-specification/service.html
       service {
-        name = "${1:service-name}"
+        name = "$1"
         port = "http"
-        tags = ["urlprefix-/${1:service-name} strip=/${1:service-name}", "${1:service-name}", "enable-metrics", "stack=service.${4:stack}", "metrics-path=/metrics"]]
+        tags = ["urlprefix-/$1 strip=/$1", "$1", "enable-metrics", "stack=service.$4", "metrics-path=/metrics"]
 
         check {
-          name     = "${1:service-name} health using http endpoint '/health'"
+          name     = "$1 health using http endpoint '/health'"
           port     = "http"
           type     = "http"
           path     = "/health"

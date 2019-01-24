@@ -52,7 +52,7 @@ job "{{ service_name }}" {
       service {
         name = "{{ service_name }}"
         port = "http"
-        tags = ["urlprefix-/{{ service_name }} strip=/{{ service_name }}", "{{ service_name }}", "enable-metrics", "stack=service.{{ stack }}", "metrics-path=/metrics"]] 
+        tags = ["urlprefix-/{{ service_name }} strip=/{{ service_name }}", "{{ service_name }}", "enable-metrics", "stack=service.{{ stack }}", "metrics-path=/metrics"]
 
         check {
           name     = "{{ service_name }} health using http endpoint '/health'"
