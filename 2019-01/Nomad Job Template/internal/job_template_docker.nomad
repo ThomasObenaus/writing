@@ -1,5 +1,5 @@
 job "{{ service_name }}" {
-  datacenters = [{{list_of_datacenters}}]
+  datacenters = [{{ list_of_datacenters }}]
 
   type = "service"
 
@@ -21,7 +21,7 @@ job "{{ service_name }}" {
   }
 
   group "{{ service_name }}" {
-    count = {{count}}
+    count = {{ count }}
 
     restart {
       interval = "10m"
@@ -34,10 +34,10 @@ job "{{ service_name }}" {
       driver = "docker"
 
       config {
-        image = "\{\{ecr_url\}\}/service/{{stack}}/{{ service_name }}:\{\{version\}\}"
+        image = "\{\{ecr_url\}\}/service/{{ stack }}/{{ service_name }}:\{\{version\}\}"
 
         port_map = {
-          http = {{exposed_port_for_health_check}}
+          http = {{ exposed_port_for_health_check }}
         }
 
         logging {
