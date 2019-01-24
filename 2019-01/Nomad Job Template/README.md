@@ -89,6 +89,7 @@ job "fail-service" {
   }
 }
 ```
+
 This minimal.nomad job file is the starting point. Throughout the article it will be enhanced by adding the objectives mentioned in the introduction step by step. First the definition for restarting of unresponsive or dead jobs is added. Then job file is extended by the configuration for rescheduling a job to a healthy nomad client node. And finally, to avoid the roll out of a faulty service version, the specification is being enhanced further by adding the specification of a deployment pattern.
 While evolving the job file incrementally I'll just add the part that has changed regarding the previous one to keep the text in check.
 In order to monitor the state of the service, nomad has to know how to obtain this information. This is specified in the `job > group > task > service > check{...}` section. According to the current definition, nomad shall call each 10s the `/health` endpoint of the service using the HTTP protocol and should treat the state as healthy if the service has responded within 2s.
@@ -114,8 +115,8 @@ with
 
 ```bash
 env {
-  UNHEALTHY_FOR = -1,
-  HEALTHY_FOR   = 30,
+  HEALTHY_FOR   = 30, # stays healthy for 30s
+  UNHEALTHY_FOR = -1, # gets unhealthy afterwards
 }
 ```
 
@@ -124,7 +125,7 @@ Here nomad offers restart and rescheduling features. [Building Resilient Infrast
 
 ### Restart failed or unresponsive Jobs
 
-With the `job > group > task > service > check{...}` section, as part of the [service stanza](https://www.nomadproject.io/docs/job-specification/service.html), nomad already knows how check the service health state. By adding the [check_restart stanza](https://www.nomadproject.io/docs/job-specification/check_restart.html) to the service definition, nomad knows when to kill a unresponsive service - how many failed health checks are enough to treat a service as unresponsive and "ready to be killed".
+With the `job > group > task > service > check{...}` section, as part of the [service stanza](https://www.nomadproject.io/docs/job-specification/service.html), nomad already knows how check the service health state. By adding the [check_restart stanza](https://www.nomadproject.io/docs/job-specification/check_restart.html) to the service definition, nomad knows when to kill an unresponsive service - how many failed health checks are enough to treat a service as unresponsive and "ready to be killed".
 Then with the addition of the [restart stanza](https://www.nomadproject.io/docs/job-specification/restart.html) to the group definition you can control when and how nomad shall restart a killed service. This restart policy applies to services killed by nomad due to be unresponsive or exceeding memory limits and to those who just crashed.
 
 The adjusted nomad job file [check_restart_unhealthy.nomad](https://gist.github.com/ThomasObenaus/9807504567b12411aa529d409c686883) is shown below and can be deployed via `nomad run check_restart_unhealthy.nomad`.
@@ -179,7 +180,7 @@ This behavior is shown schematically in the image above:
 
 ### Reschedule failing Jobs
 
-With this extended nomad job file we have now a system that can heal a service which fails or gets unresponsive sometimes. But what if there is a systematic or persistent problem? For example it could be that the docker daemon on a specific node is broken. Here nomad, per default, tries to reschedule failing jobs on nodes that are healthy (regarding the driver state) and prefers nodes the job did not run beforehand on.
+With the extended nomad job file, [check_restart_unhealthy.nomad](https://gist.github.com/ThomasObenaus/9807504567b12411aa529d409c686883), we have now a system that can heal a service which fails or gets unresponsive sometimes. But what if there is a systematic or persistent problem? For example it could be that the docker daemon on a specific node is broken. Here nomad, per default, tries to reschedule failing jobs on nodes that are healthy and prefers nodes the job did not run beforehand on. Beside general connectivity, an important criteria for healthiness of a node is the task driver health state. More details are shown at [driver health checking](https://www.hashicorp.com/blog/nomad-0-8#health-checking).
 To specify the rescheduling behavior explicitly we extend the nomad job file by adding the [rescheduling stanza](https://www.nomadproject.io/docs/job-specification/reschedule.html).
 
 ```bash
@@ -208,7 +209,7 @@ With the points discussed so far, we have a job file that makes use of the nomad
 
 Nomad provides standard deployment patterns like rolling update, canary- and blue/ green deployment. Again, for this topic as well, hashicorp has written the nice blog post [Building Resilient Infrastructure with Nomad: Job Lifecycle](https://www.hashicorp.com/blog/building-resilient-infrastructure-with-nomad-job-lifecycle), explaining how deployment of nomad jobs can be configured.
 
-This post is about defining a good default nomad job file. That's why, I'll just focus on the rolling update as the default pattern. The remaining ones need operator intervention, i.e. a canary has to be promoted manually when testing was successful.
+This post is about defining a good default nomad job file. That's why, I'll just focus on the _rolling update_ as the default pattern. The remaining ones need operator intervention, i.e. a canary has to be promoted manually when testing was successful.
 
 The type of deployment is specified with the [update stanza](https://www.nomadproject.io/docs/job-specification/update.html). Per default no deployment pattern is used. Thus we extend the job file by:
 
@@ -246,7 +247,11 @@ Now after having deployed a working version, we want to see how nomad behaves if
 By replacing `env { HEALTHY_FOR = -1 }` with `env { HEALTHY_IN = -1 }` we get [rolling_deployment_unhealthy.nomad](https://gist.github.com/ThomasObenaus/a6405aef948bd26fa716094dc8825125). Which can be deployed with `nomad run rolling_deployment_unhealthy.nomad`.
 
 With the update stanza in the job file we defined a rolling update. Here nomad replaces one (`max_parallel = 1`) of the currently running versions by a new one.
-If an instance of the new version is healthy for at least 10 seconds (`min_healthy_time = "10s"`) nomad will take down the next old version and tries to update it. But in our case even the first instance of the new version never gets healthy. Thus nomad follows the rules that are defined in the job file for restarting and rescheduling to get the new version up. Since we have defined an unlimited amount of rescheduling retries the deployment would take forever. To avoid this two parameters have to be considered.
+If an instance of the new version is healthy for at least 10 seconds (`min_healthy_time = "10s"`) nomad will take down the next old version and tries to update it. But in our case even the first instance of the new version never gets healthy. Thus nomad follows the rules that are defined in the job file for restarting and rescheduling, which was described in the previous sections, to get the new version up. Since we have defined an unlimited amount of rescheduling retries the deployment would take forever. To avoid this two parameters have to be considered:
+
+- `healthy_deadline`
+- `progress_deadline`
+
 The `healthy_deadline = "5m"` specifies how much time an allocation has to get healthy before being rescheduled. If the new version does not get healthy within 5 minutes, the allocation will be marked as unhealthy and the rescheduling will be started. This overwrites potentially conflicting values defined in the `check` and `restart` stanza, that would have specified more time for the allocation to get healthy before being rescheduled. Furthermore even if the `healthy_deadline` has been exceeded the deployment still goes on.
 The parameter `progress_deadline = "10m"` defines the time a deployment can take at maximum before being marked as failed. This applies in case not all allocations get healthy in this time span.
 
@@ -357,6 +362,7 @@ _The snippets are only activated/ available if you are in hcl mode. Therefore yo
 1. Visual Studio Code: [global code snippet](https://gist.github.com/ThomasObenaus/655607103fd7932d6572b4972aa4cc78) or [language specific](https://gist.github.com/ThomasObenaus/0924f17a947f9b1252aa27dccf21d67b.).
 2. Atom: [snippet_atom.cson](https://gist.github.com/ThomasObenaus/e79e56814d90b755123a9194272f8131).
 3. Sublime: [nomad.sublime.snippet](https://gist.github.com/ThomasObenaus/dedff3284de671667cd7f3c9cf9e3cea).
+4. Emacs/ Yasnippet: [hcl-mode/nomad](https://gist.github.com/ThomasObenaus/c52e85d8f774e29ae46d85389d2aedef)
 
 ## Summary and Outlook
 
